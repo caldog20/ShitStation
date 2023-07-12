@@ -35,7 +35,10 @@ add_subdirectory(deps/glad)
 add_subdirectory(deps/fmt)
 add_subdirectory(deps/magic_enum)
 
-find_package(SDL2 REQUIRED)
+if (!WIN32)
+    find_package(SDL2 REQUIRED)
+endif()
+
 if (!SDL2_FOUND)
     message("SDL2 not found, building from source...")
     add_subdirectory(deps/SDL)
