@@ -5,7 +5,7 @@ add_executable(ShitStation
 
 target_include_directories(ShitStation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(ShitStation PRIVATE SDL2-static glad fmt::fmt ImGui magic_enum::magic_enum)
+target_link_libraries(ShitStation PRIVATE SDL2::SDL2-static glad fmt::fmt ImGui magic_enum::magic_enum)
 
 
 set_target_warnings(ShitStation WARNINGS_AS_ERRORS)

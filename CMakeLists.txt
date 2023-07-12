@@ -31,11 +31,15 @@ set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_TEST OFF CACHE BOOL "" FORCE)
 
-add_subdirectory(deps/SDL)
 add_subdirectory(deps/glad)
 add_subdirectory(deps/fmt)
 add_subdirectory(deps/magic_enum)
 
+find_package(SDL2 REQUIRED)
+if (!SDL2_FOUND)
+    message("SDL2 not found, building from source...")
+    add_subdirectory(deps/SDL)
+endif()
 
 #IMGUI
 set(IMGUI_DIR deps/imgui)
@@ -52,7 +56,7 @@ add_library(ImGui STATIC
 )
 
 target_include_directories(ImGui PUBLIC ${IMGUI_INCLUDE_DIRS})
-target_link_libraries(ImGui PRIVATE SDL2-static)
+target_link_libraries(ImGui PRIVATE SDL2::SDL2-static)
 
 if (ENABLE_CACHE)
     try_enable_cache()

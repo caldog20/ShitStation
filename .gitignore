@@ -1,0 +1,74 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+build/
+cmake-build-*/
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+#*.exe
+*.out
+*.app
+*.dol
+*.wad
+*.iso
+*.smc
+*.sfc
+*.dmg
+*.bin
+*.cue
+
+# IDA database
+*.id0
+*.id1
+*.nam
+*.til
+*.idb
+
+# VSC workspace
+*.code-workspace
+.vscode/
+
+# Temporary System Files
+.DS_Store
+.cache/
+compile_commands.json
+
+# CLion Settings
+.idea/
+
+# Diff/Patch Files
+*.patch
+*.diff
+patches/
+
+# PDF/etc
+*.pdf
+*.ini
+
+#MISC
+docgen
+notes.md
