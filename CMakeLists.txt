@@ -39,6 +39,13 @@ if (NOT WIN32)
     find_package(SDL2 REQUIRED)
 endif()
 
+if (WIN32)
+    add_compile_definitions(NOMINMAX)
+    add_compile_definitions(WIN32_LEAN_AND_MEAN)
+    add_compile_definitions(SDL_MAIN_HANDLED)
+endif()
+
+
 if (NOT SDL2_FOUND)
     message("SDL2 not found, building from source...")
     add_subdirectory(deps/SDL)
