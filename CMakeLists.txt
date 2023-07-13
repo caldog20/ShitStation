@@ -16,7 +16,7 @@ set(ENABLE_SANITIZER_MEMORY OFF CACHE BOOL "Enable Memory Sanitizer if available
 set(ENABLE_SANITIZER_UNDEFINED_BEHAVIOR OFF CACHE BOOL "Enable Undefined Behavior Sanitizer if available" FORCE)
 set(ENABLE_CACHE ON CACHE BOOL "Strictly disable caching" FORCE)
 set(ENABLE_IPO OFF CACHE BOOL "Enable Interprocedural Optimization" FORCE)
-set(WARNINGS_AS_ERRORS ON CACHE BOOL "Enable Warnings as Errors" FORCE)
+set(WARNINGS_AS_ERRORS OFF CACHE BOOL "Enable Warnings as Errors" FORCE)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
@@ -45,6 +45,7 @@ if (WIN32)
     add_compile_definitions(SDL_MAIN_HANDLED)
 endif()
 
+add_compile_definitions(GL_SILENCE_DEPRECATION)
 
 if (NOT SDL2_FOUND)
     message("SDL2 not found, building from source...")

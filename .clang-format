@@ -11,4 +11,4 @@ AllowShortFunctionsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 Cpp11BracedListStyle: true
 PackConstructorInitializers: BinPack
-AlignAfterOpenBracket: BlockIndent
+#AlignAfterOpenBracket: BlockIndent
