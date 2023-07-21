@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <limits>
+#include <cstdint>
 
 using Cycles = std::uint64_t;
 using Callback = std::function<void()>;
