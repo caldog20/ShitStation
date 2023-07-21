@@ -6,7 +6,7 @@ project(
 )
 
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+#set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
 set(ENABLE_SANITIZER_ADDRESS OFF CACHE BOOL "Enable Address Sanitizer if available" FORCE)
@@ -31,15 +31,7 @@ set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_TEST OFF CACHE BOOL "" FORCE)
 
-add_subdirectory(deps/glad)
-add_subdirectory(deps/fmt)
-add_subdirectory(deps/magic_enum)
-
-if (NOT WIN32)
-    find_package(SDL2 REQUIRED)
-endif()
-
-if (WIN32)
+if(WIN32)
     add_compile_definitions(NOMINMAX)
     add_compile_definitions(WIN32_LEAN_AND_MEAN)
     add_compile_definitions(SDL_MAIN_HANDLED)
@@ -47,27 +39,28 @@ endif()
 
 add_compile_definitions(GL_SILENCE_DEPRECATION)
 
-if (NOT SDL2_FOUND)
-    message("SDL2 not found, building from source...")
-    add_subdirectory(deps/SDL)
-endif()
+add_subdirectory(deps/SDL)
+add_subdirectory(deps/glad)
+add_subdirectory(deps/fmt)
+add_subdirectory(deps/magic_enum)
+add_subdirectory(deps/Dolphin)
 
-#IMGUI
-set(IMGUI_DIR deps/imgui)
-set(IMGUI_INCLUDE_DIRS deps/imgui deps/imgui/backends)
-
-add_library(ImGui STATIC
-        ${IMGUI_DIR}/imgui.cpp
-        ${IMGUI_DIR}/imgui_demo.cpp
-        ${IMGUI_DIR}/imgui_draw.cpp
-        ${IMGUI_DIR}/imgui_tables.cpp
-        ${IMGUI_DIR}/imgui_widgets.cpp
-        ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp
-        ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
-)
-
-target_include_directories(ImGui PUBLIC ${IMGUI_INCLUDE_DIRS})
-target_link_libraries(ImGui PRIVATE SDL2::SDL2-static)
+##IMGUI
+#set(IMGUI_DIR deps/imgui)
+#set(IMGUI_INCLUDE_DIRS deps/imgui deps/imgui/backends)
+#
+#add_library(ImGui STATIC
+#        ${IMGUI_DIR}/imgui.cpp
+#        ${IMGUI_DIR}/imgui_demo.cpp
+#        ${IMGUI_DIR}/imgui_draw.cpp
+#        ${IMGUI_DIR}/imgui_tables.cpp
+#        ${IMGUI_DIR}/imgui_widgets.cpp
+#        ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp
+#        ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+#)
+#
+#target_include_directories(ImGui PUBLIC ${IMGUI_INCLUDE_DIRS})
+#target_link_libraries(ImGui PRIVATE SDL2::SDL2-static)
 
 if (ENABLE_CACHE)
     try_enable_cache()

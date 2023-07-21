@@ -6,7 +6,7 @@ namespace GUI {
 
 	GUI::GUI() {
 		if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-			Util::panic("Error initializing SDL: {}", SDL_GetError());
+			Helpers::panic("Error initializing SDL: {}", SDL_GetError());
 		}
 
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -21,19 +21,19 @@ namespace GUI {
 
 		window = SDL_CreateWindow(windowTitle, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, window_flags);
 		if (window == nullptr) {
-			Util::panic("Error creating SDL Window: {}", SDL_GetError());
+			Helpers::panic("Error creating SDL Window: {}", SDL_GetError());
 		}
 
 		glContext = SDL_GL_CreateContext(window);
 		if (glContext == 0) {
-			Util::panic("Error creating OpenGL Context: {}", SDL_GetError());
+			Helpers::panic("Error creating OpenGL Context: {}", SDL_GetError());
 		}
 
 		SDL_GL_MakeCurrent(window, glContext);
 		SDL_GL_SetSwapInterval(1);  // VSync on by default
 
 		if (!gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress)) {
-			Util::panic("Error initializing glad GL Loader: {}", SDL_GetError());
+			Helpers::panic("Error initializing glad GL Loader: {}", SDL_GetError());
 		}
 
 		IMGUI_CHECKVERSION();

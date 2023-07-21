@@ -17,6 +17,8 @@ using s16 = std::int16_t;
 using s32 = std::int32_t;
 using s64 = std::int64_t;
 
+using Cycles = u64;
+
 static constexpr bool debugBuild() {
 #ifdef NDEBUG
 	return false;
@@ -24,7 +26,22 @@ static constexpr bool debugBuild() {
 	return true;
 }
 
-namespace Util {
+template <typename T>
+struct Range {
+	Range(T begin, T size) : start(begin), length(size) { static_assert(std::is_integral<T>::value, "Range should take an unsigned integer type"); }
+
+	inline bool contains(u32 addr) const { return (addr >= start && addr < start + length); }
+
+	inline u32 offset(u32 addr) const { return addr - start; }
+
+	T start = 0;
+	T length = 0;
+};
+
+constexpr auto operator""_Kb(u64 const x) -> u64 { return 1024UL * x; }
+constexpr auto operator""_Mb(u64 const x) -> u64 { return 1024UL * 1024UL * x; }
+
+namespace Helpers {
 	using enum fmt::color;
 
 	static inline constexpr u32 signExtend32(u32 value, u32 startingSize) {
@@ -67,25 +84,28 @@ namespace Util {
 		}
 	}
 
-}  // namespace Util
+}  // namespace Helpers
 
 namespace Log {
 	using enum fmt::color;
 
 	template <typename... Args>
-	static void warn(const char* fmt, const Args&... args) {
-		fmt::print(fg(fmt::color::red), fmt, std::forward<Args>(args)...);
+	static void warn(fmt::format_string<Args...> fmt, const Args&... args) {
+		fmt::print(fg(fmt::color::red), "Warn: ");
+		fmt::print(fmt, std::forward<Args>(args)...);
 	}
 
 	template <typename... Args>
-	static void info(const char* fmt, const Args&... args) {
-		fmt::print(fg(fmt::color::white), fmt, std::forward<Args>(args)...);
+	static void info(fmt::format_string<Args...> fmt, const Args&... args) {
+		fmt::print(fg(fmt::color::gray), "Info: ");
+		fmt::print(fmt, std::forward<Args>(args)...);
 	}
 
 	template <typename... Args>
-	static void debug(const char* fmt, const Args&... args) {
+	static void debug(fmt::format_string<Args...> fmt, Args&&... args) {
 		if constexpr (debugBuild()) {
-			fmt::print(fg(fmt::color::green), fmt, std::forward<Args>(args)...);
+			fmt::print(fg(fmt::color::green), "Debug: ");
+			fmt::print(fmt, std::forward<Args>(args)...);
 		}
 	}
 
