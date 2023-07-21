@@ -38,8 +38,8 @@ struct Range {
 	T length = 0;
 };
 
-constexpr auto operator""_Kb(u64 const x) -> u64 { return 1024UL * x; }
-constexpr auto operator""_Mb(u64 const x) -> u64 { return 1024UL * 1024UL * x; }
+constexpr auto operator""_Kb(unsigned long long int x) -> u64 { return 1024UL * x; }
+constexpr auto operator""_Mb(unsigned long long int x) -> u64 { return 1024UL * 1024UL * x; }
 
 namespace Helpers {
 	using enum fmt::color;
