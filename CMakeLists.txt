@@ -6,7 +6,7 @@ project(
 )
 
 set(CMAKE_CXX_STANDARD 23)
-#set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
 set(ENABLE_SANITIZER_ADDRESS OFF CACHE BOOL "Enable Address Sanitizer if available" FORCE)
