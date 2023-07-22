@@ -3,7 +3,8 @@
 #include <cstdint>
 #include <string>
 #include <utility>
-
+#include <fstream>
+#include <vector>
 #include "fmt/color.h"
 #include "fmt/format.h"
 
@@ -21,92 +22,116 @@ using Cycles = u64;
 
 static constexpr bool debugBuild() {
 #ifdef NDEBUG
-	return false;
+		return false;
 #endif
-	return true;
+		return true;
 }
 
 template <typename T>
 struct Range {
-	Range(T begin, T size) : start(begin), length(size) { static_assert(std::is_integral<T>::value, "Range should take an unsigned integer type"); }
+		Range(T begin, T size) : start(begin), length(size) { static_assert(std::is_integral<T>::value, "Range should take an unsigned integer type"); }
 
-	inline bool contains(u32 addr) const { return (addr >= start && addr < start + length); }
+		inline bool contains(u32 addr) const { return (addr >= start && addr < start + length); }
 
-	inline u32 offset(u32 addr) const { return addr - start; }
+		inline u32 offset(u32 addr) const { return addr - start; }
 
-	T start = 0;
-	T length = 0;
+		T start = 0;
+		T length = 0;
 };
 
 constexpr auto operator""_Kb(unsigned long long int x) -> u64 { return 1024UL * x; }
 constexpr auto operator""_Mb(unsigned long long int x) -> u64 { return 1024UL * 1024UL * x; }
 
 namespace Helpers {
-	using enum fmt::color;
+		using enum fmt::color;
 
-	static inline constexpr u32 signExtend32(u32 value, u32 startingSize) {
-		auto temp = (s32)value;
-		auto bitsToShift = 32 - startingSize;
-		return (u32)(temp << bitsToShift >> bitsToShift);
-	}
+		static inline constexpr bool isBitSet(u32 value, int bit) { return (value >> bit) & 1; }
 
-	static inline constexpr u16 signExtend16(u16 value, u32 startingSize) {
-		auto temp = (s16)value;
-		auto bitsToShift = 16 - startingSize;
-		return (u16)(temp << bitsToShift >> bitsToShift);
-	}
-
-	template <typename ReturnType, typename V>
-	constexpr ReturnType signExtend(V value) {
-		return static_cast<ReturnType>(
-			static_cast<typename std::make_signed<ReturnType>::type>(static_cast<typename std::make_signed<V>::type>(value)));
-	}
-
-	template <typename ReturnType, typename V>
-	constexpr ReturnType zeroExtend(V value) {
-		return static_cast<ReturnType>(
-			static_cast<typename std::make_unsigned<ReturnType>::type>(static_cast<typename std::make_unsigned<V>::type>(value)));
-	}
-
-	template <typename... Args>
-	[[noreturn]] static void panic(const char* fmt, const Args&... args) {
-		fmt::print(fg(red), fmt, args...);
-		fmt::print(fg(red), "Exiting\n");
-		exit(1);
-	}
-
-	template <typename... Args>
-	static void panic(bool condition, const char* fmt, const Args&... args) {
-		if (condition) {
-			fmt::print(fg(fmt::color::red), fmt, args...);
-			fmt::print(fg(red), "Exiting\n");
-			exit(1);
+		static inline constexpr u32 signExtend32(u32 value, u32 startingSize) {
+				auto temp = (s32)value;
+				auto bitsToShift = 32 - startingSize;
+				return (u32)(temp << bitsToShift >> bitsToShift);
 		}
-	}
+
+		static inline constexpr u16 signExtend16(u16 value, u32 startingSize) {
+				auto temp = (s16)value;
+				auto bitsToShift = 16 - startingSize;
+				return (u16)(temp << bitsToShift >> bitsToShift);
+		}
+
+		template <typename ReturnType, typename V>
+		constexpr ReturnType signExtend(V value) {
+				return static_cast<ReturnType>(
+						static_cast<typename std::make_signed<ReturnType>::type>(static_cast<typename std::make_signed<V>::type>(value)));
+		}
+
+		template <typename ReturnType, typename V>
+		constexpr ReturnType zeroExtend(V value) {
+				return static_cast<ReturnType>(
+						static_cast<typename std::make_unsigned<ReturnType>::type>(static_cast<typename std::make_unsigned<V>::type>(value)));
+		}
+
+		template <typename... Args>
+		[[noreturn]] static void panic(const char* fmt, const Args&... args) {
+				fmt::print(fg(red), fmt, args...);
+				fmt::print(fg(red), "Exiting\n");
+				exit(1);
+		}
+
+		template <typename... Args>
+		static void panic(bool condition, const char* fmt, const Args&... args) {
+				if (condition) {
+						fmt::print(fg(fmt::color::red), fmt, args...);
+						fmt::print(fg(red), "Exiting\n");
+						exit(1);
+				}
+		}
 
 }  // namespace Helpers
 
 namespace Log {
-	using enum fmt::color;
+		using enum fmt::color;
 
-	template <typename... Args>
-	static void warn(fmt::format_string<Args...> fmt, const Args&... args) {
-		fmt::print(fg(fmt::color::red), "Warn: ");
-		fmt::print(fmt, std::forward<Args>(args)...);
-	}
-
-	template <typename... Args>
-	static void info(fmt::format_string<Args...> fmt, const Args&... args) {
-		fmt::print(fg(fmt::color::gray), "Info: ");
-		fmt::print(fmt, std::forward<Args>(args)...);
-	}
-
-	template <typename... Args>
-	static void debug(fmt::format_string<Args...> fmt, Args&&... args) {
-		if constexpr (debugBuild()) {
-			fmt::print(fg(fmt::color::green), "Debug: ");
-			fmt::print(fmt, std::forward<Args>(args)...);
+		template <typename... T>
+		static void warn(fmt::format_string<T...> fmt, T&&... args) {
+				fmt::print(fg(fmt::color::red), "Warn: ");
+				fmt::print(fmt, std::forward<T>(args)...);
 		}
-	}
+
+		template <typename... T>
+		static void info(fmt::format_string<T...> fmt, T&&... args) {
+				fmt::print(fmt, std::forward<T>(args)...);
+		}
+
+		template <typename... Args>
+		static void debug(fmt::format_string<Args...> fmt, Args&&... args) {
+				if constexpr (debugBuild()) {
+						fmt::print(fg(fmt::color::green), "Debug: ");
+						fmt::print(fmt, std::forward<Args>(args)...);
+				}
+		}
 
 }  // namespace Log
+
+static auto loadBin(const std::filesystem::path& path) -> std::vector<u8> {
+		if (!std::filesystem::exists(path)) {
+				Log::warn("File at {} does not exist\n", path.string());
+				return {};
+		}
+
+		auto file = std::ifstream(path, std::ios::binary);
+		if (file.fail()) {
+				Log::warn("Cannot open file at {}\n", path.string());
+				return {};
+		}
+
+		file.unsetf(std::ios::skipws);
+		auto fileSize = std::filesystem::file_size(path);
+		auto buffer = std::vector<u8>(fileSize);
+
+		file.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(fileSize));
+
+		file.close();
+
+		return buffer;
+}

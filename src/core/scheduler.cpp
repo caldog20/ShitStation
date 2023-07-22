@@ -5,11 +5,11 @@ Scheduler::Scheduler(Cycles& cycles) : cycles(cycles) { scheduleEvent(std::numer
 void Scheduler::scheduleEvent(Cycles cycleCount, Callback callback) { events.emplace(cycles + cycleCount, callback); }
 
 void Scheduler::handleEvents() {
-	while (cycles >= events.top().cycleTarget()) {
-		if (events.top().callback != nullptr) events.top().callback();
+		while (cycles >= events.top().cycleTarget()) {
+				if (events.top().callback != nullptr) events.top().callback();
 
-		events.pop();
-	}
+				events.pop();
+		}
 }
 
 void Scheduler::reset() { clearEvents(); }

@@ -7,6 +7,8 @@ add_executable(ShitStation
         core/scheduler.cpp
         core/cpu.cpp
         core/bus.cpp
+        core/gte.cpp
+        core/cdrom.cpp
 )
 
 target_include_directories(ShitStation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
