@@ -1,9 +1,3 @@
-#include "core/emulator.hpp"
+#include "support/helpers.hpp"
 
-auto main() -> int {
-		Emulator emulator;
-		emulator.bus.loadBIOS("/Users/yatesca/Projects/PSXEmulator/resources/SCPH1001.BIN");
-		while (emulator.isOpen()) {
-				emulator.update();
-		}
-}
+auto main() -> int { return 0; }

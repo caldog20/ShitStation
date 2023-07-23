@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.20)
 project(
         shitstation
         VERSION 0.1.0
@@ -27,9 +27,7 @@ include(cmake/Sanitizers.cmake)
 include(cmake/StandardProjectSettings.cmake)
 include(cmake/IPO.cmake)
 
-set(SDL_STATIC ON CACHE BOOL "" FORCE)
-set(SDL_SHARED OFF CACHE BOOL "" FORCE)
-set(SDL_TEST OFF CACHE BOOL "" FORCE)
+
 
 if(WIN32)
     add_compile_definitions(NOMINMAX)
@@ -39,28 +37,19 @@ endif()
 
 add_compile_definitions(GL_SILENCE_DEPRECATION)
 
-add_subdirectory(deps/SDL)
+if(APPLE)
+    find_package(SDL2 REQUIRED)
+else ()
+    set(SDL_STATIC ON CACHE BOOL "" FORCE)
+    set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+    set(SDL_TEST OFF CACHE BOOL "" FORCE)
+    add_subdirectory(deps/SDL)
+endif ()
+
 add_subdirectory(deps/glad)
 add_subdirectory(deps/fmt)
 add_subdirectory(deps/magic_enum)
 add_subdirectory(deps/Dolphin)
-
-##IMGUI
-#set(IMGUI_DIR deps/imgui)
-#set(IMGUI_INCLUDE_DIRS deps/imgui deps/imgui/backends)
-#
-#add_library(ImGui STATIC
-#        ${IMGUI_DIR}/imgui.cpp
-#        ${IMGUI_DIR}/imgui_demo.cpp
-#        ${IMGUI_DIR}/imgui_draw.cpp
-#        ${IMGUI_DIR}/imgui_tables.cpp
-#        ${IMGUI_DIR}/imgui_widgets.cpp
-#        ${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp
-#        ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
-#)
-#
-#target_include_directories(ImGui PUBLIC ${IMGUI_INCLUDE_DIRS})
-#target_link_libraries(ImGui PRIVATE SDL2::SDL2-static)
 
 if (ENABLE_CACHE)
     try_enable_cache()
@@ -70,4 +59,25 @@ if (ENABLE_IPO)
     enable_ipo()
 endif()
 
-add_subdirectory(src)
+add_executable(ShitStation
+        src/main.cpp
+        src/support/log.hpp
+        src/support/helpers.hpp
+        src/cpu/cpu.cpp
+        src/cpu/cpu.hpp
+        src/support/register.hpp
+)
+
+target_link_libraries(ShitStation PRIVATE SDL2::SDL2-static glad fmt::fmt magic_enum::magic_enum BitField)
+target_include_directories(ShitStation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+set_target_warnings(ShitStation WARNINGS_AS_ERRORS)
+
+
+enable_sanitizers(ShitStation
+        ${ENABLE_SANITIZER_ADDRESS}
+        ${ENABLE_SANITIZER_LEAK}
+        ${ENABLE_SANITIZER_THREAD}
+        ${ENABLE_SANITIZER_MEMORY}
+        ${ENABLE_SANITIZER_UNDEFINED_BEHAVIOR}
+)
