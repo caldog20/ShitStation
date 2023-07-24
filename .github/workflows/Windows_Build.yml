@@ -12,9 +12,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Fetch submodules
-        run: git submodule update --init --recursive
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+          set-safe-directory: true
 
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
