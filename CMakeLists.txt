@@ -66,6 +66,8 @@ add_executable(ShitStation
         src/cpu/cpu.cpp
         src/cpu/cpu.hpp
         src/support/register.hpp
+        src/bus/bus.cpp
+        src/bus/bus.hpp
 )
 
 target_link_libraries(ShitStation PRIVATE SDL2::SDL2-static glad fmt::fmt magic_enum::magic_enum BitField)

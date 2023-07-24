@@ -11,17 +11,17 @@ namespace Cpu {
 	void Cpu::reset() {
 		m_regs.gpr.reset();
 		m_regs.cop0.reset();
-		m_delayedLoad.reset();
-		m_memoryLoad.reset();
-		m_writeBack.reset();
+		delayedLoad.reset();
+		memoryLoad.reset();
+		writeBack.reset();
 
-		m_pc = RESET_VECTOR;
-		m_next_pc = m_pc + 4;
-		m_current_pc = m_pc;
-		m_branch = false;
-		m_branchTaken = false;
-		m_delaySlot = false;
-		m_branchTakenDelaySlot = false;
+		PC = RESET_VECTOR;
+		nextPC = PC + 4;
+		currentPC = PC;
+		branch = false;
+		branchTaken = false;
+		delaySlot = false;
+		branchTakenDelaySlot = false;
 		totalCycles = 0;
 		cyclesToRun = 0;
 		ttyBuffer.clear();
@@ -34,20 +34,20 @@ namespace Cpu {
 	void Cpu::execute() {}
 
 	void Cpu::memory() {
-		if (m_delayedLoad.reg != m_memoryLoad.reg) {
-			m_regs.gpr[m_memoryLoad.reg] = m_memoryLoad.value;
+		if (delayedLoad.reg != memoryLoad.reg) {
+			m_regs.gpr[memoryLoad.reg] = memoryLoad.value;
 		}
-		m_memoryLoad = m_delayedLoad;
-		m_delayedLoad.reset();
+		memoryLoad = delayedLoad;
+		delayedLoad.reset();
 	}
 
 	void Cpu::writeback() {
-		m_regs.gpr[m_writeBack.reg] = m_writeBack.value;
-		m_writeBack.reset();
+		m_regs.gpr[writeBack.reg] = writeBack.value;
+		writeBack.reset();
 	}
 
 	void Cpu::handleKernelCalls() {
-		const u32 pc = m_pc & 0x1FFFFF;
+		const u32 pc = pc & 0x1FFFFF;
 		const u32 func = m_regs.gpr[9];
 
 		if (pc == 0xB0) {

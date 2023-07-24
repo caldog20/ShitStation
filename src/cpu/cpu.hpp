@@ -120,13 +120,13 @@ namespace Cpu {
 		void reset();
 		void step();
 
-		[[nodiscard]] auto getPC() const -> u32 { return m_pc; }
+		[[nodiscard]] auto getPC() const -> u32 { return PC; }
 		void setPC(u32 pc) {
-			m_pc = pc;
-			m_next_pc = m_pc + 4;
+			PC = pc;
+			nextPC = pc + 4;
 		}
 
-		[[nodiscard]] bool isCacheIsolated() const { return (m_regs.cop0[23] & 0x10000); }
+		[[nodiscard]] bool isCacheIsolated() const { return (m_regs.cop0[SR] & 0x10000); }
 
 		[[nodiscard]] auto getTotoalCycles() const -> Cycles { return totalCycles; }
 		[[nodiscard]] auto getCyclesToRun() const -> Cycles { return cyclesToRun; }
@@ -143,20 +143,20 @@ namespace Cpu {
 		Instruction m_instruction{0};
 		Regs m_regs;
 
-		Writeback m_delayedLoad;
-		Writeback m_memoryLoad;
-		Writeback m_writeBack;
+		Writeback delayedLoad;
+		Writeback memoryLoad;
+		Writeback writeBack;
 
 		Cycles totalCycles;
 		Cycles cyclesToRun;
 
-		u32 m_pc;
-		u32 m_next_pc;
-		u32 m_current_pc;
-		bool m_branch;
-		bool m_branchTaken;
-		bool m_delaySlot;
-		bool m_branchTakenDelaySlot;
+		u32 PC;
+		u32 nextPC;
+		u32 currentPC;
+		bool branch;
+		bool branchTaken;
+		bool delaySlot;
+		bool branchTakenDelaySlot;
 
 		std::string ttyBuffer;
 		const u32 RESET_VECTOR = 0xbfc00000;
