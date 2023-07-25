@@ -1,9 +1,11 @@
 #pragma once
+#include <cassert>
+
 #include "support/helpers.hpp"
 
 namespace Bus {
 
-	enum IRQ : u32 { VBLANK = 0, GPU, CDROM, DMA, TIMER0, TIMER1, TIMER2, PAD, SIO, SPU, LIGHTPEN };
+	enum IRQ : u16 { VBLANK = 0, GPU, CDROM, DMA, TIMER0, TIMER1, TIMER2, PAD, SIO, SPU, LIGHTPEN };
 
 	struct Range {
 		Range(u32 base, u32 size) : base(base), size(size) {}
@@ -64,9 +66,19 @@ namespace Bus {
 				write8(address, value);
 		}
 
-		[[nodiscard]] auto getRamPointer() const -> u8* { return ram; }
-		[[nodiscard]] auto getBiosPointer() const -> u8* { return bios; }
-		[[nodiscard]] auto getScratchpadPointer() const -> u8* { return scratchpad; }
+		template <typename T = u8>
+		[[nodiscard]] auto getRamPointer(u32 address = 0) -> T* {
+			auto addr = mask(address);
+			assert(RAM.contains(addr));
+			return (T*)&ram[RAM.offset(addr)];
+		}
+
+		template <typename T = u8>
+		[[nodiscard]] auto getBiosPointer(u32 address = 0) -> T* {
+			auto addr = mask(address);
+			assert(BIOS.contains(addr));
+			return (T*)&bios[BIOS.offset(addr)];
+		}
 
 	  private:
 		u32 CacheControl;
@@ -82,6 +94,8 @@ namespace Bus {
 		uintptr_t* readPages = nullptr;
 		uintptr_t* writePages = nullptr;
 
+		const Range RAM = {0x00000000, MemorySize::Ram};
+		const Range BIOS = {0xBFC00000, MemorySize::Bios};
 		const Range SPU = {0x1F801C00, 0x180};
 		const Range CDROM = {0x1F801800, 4};
 		const Range CACHECONTROL = {0xFFFE0130, 4};

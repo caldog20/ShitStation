@@ -71,7 +71,6 @@ class RegisterSet {
 //		bool operator>=(const Register& rhs) const { return *this >= rhs; }
 //	};
 
-// Generate abstract class for hardware register
 #define REGISTER(name, type)                    \
 	class name : public Register<type> {        \
 	  public:                                   \

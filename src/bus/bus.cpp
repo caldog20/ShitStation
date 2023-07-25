@@ -69,6 +69,10 @@ namespace Bus {
 		// TODO: Check if Cache is isolated
 		// TODO: Add approp cycle BIAS
 
+		if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
+			cpu.cycles
+		}
+
 		// BIOS/RAM Fastmem Reads
 		if (pointer != 0) {
 			return *(u8*)(pointer + offset);

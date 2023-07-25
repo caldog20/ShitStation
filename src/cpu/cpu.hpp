@@ -7,45 +7,15 @@
 #include "support/register.hpp"
 
 namespace Cpu {
-
+	// clang-format off
 	enum : u32 {
-		ZERO,
-		AT,
-		V0,
-		V1,
-		A0,
-		A1,
-		A2,
-		A3,
-		T0,
-		T1,
-		T2,
-		T3,
-		T4,
-		T5,
-		T6,
-		T7,
-		S0,
-		S1,
-		S2,
-		S3,
-		S4,
-		S5,
-		S6,
-		S7,
-		T8,
-		T9,
-		K0,
-		K1,
-		GP,
-		SP,
-		FP,
-		RA,
-		HI,
-		LO
+		ZERO, AT, V0, V1, A0, A1, A2, A3, T0, T1, T2, T3, T4, T5, T6, T7,
+		S0, S1, S2, S3, S4, S5, S6, S7, T8, T9, K0, K1, GP, SP, FP, RA,
+		HI, LO
 	};
 
 	enum : u32 { R0, R1, R2, BPC, R4, BDA, TAR, DCIC, BVA, BDAM, R10, BPCM, SR, CAUSE, EPC, PRID };
+	// clang-format on
 
 	union Instruction {
 		u32 code;
@@ -128,9 +98,10 @@ namespace Cpu {
 
 		[[nodiscard]] bool isCacheIsolated() const { return (m_regs.cop0[SR] & 0x10000); }
 
-		[[nodiscard]] auto getTotoalCycles() const -> Cycles { return totalCycles; }
-		[[nodiscard]] auto getCyclesToRun() const -> Cycles { return cyclesToRun; }
-		void setCyclesToRun(Cycles cycles) { cyclesToRun = cycles; }
+		[[nodiscard]] auto getTotalCycles() const -> Cycles { return totalCycles; }
+		[[nodiscard]] auto getCycleTarget() const -> Cycles { return cycleTarget; }
+		void setCycleTarget(Cycles cycles) { cycleTarget = cycles; }
+		void addCycles(Cycles cycles) { totalCycles += cycles; }
 
 	  private:
 		inline void fetch();
@@ -148,7 +119,7 @@ namespace Cpu {
 		Writeback writeBack;
 
 		Cycles totalCycles;
-		Cycles cyclesToRun;
+		Cycles cycleTarget;
 
 		u32 PC;
 		u32 nextPC;
