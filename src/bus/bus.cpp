@@ -1,14 +1,11 @@
-//
-// Created by Caleb Yates on 7/23/23.
-//
-
 #include "bus.hpp"
 
+#include "cpu/cpu.hpp"
 #include "support/log.hpp"
 
 namespace Bus {
 
-	Bus::Bus() {
+	Bus::Bus(Cpu::Cpu& cpu) : cpu(cpu) {
 		try {
 			ram = new u8[MemorySize::Ram];
 			bios = new u8[MemorySize::Bios];
@@ -53,7 +50,7 @@ namespace Bus {
 	}
 
 	void Bus::reset() {
-		std::memset(ram, 0xff, MemorySize::Ram);
+		std::memset(ram, 0, MemorySize::Ram);
 		std::memset(scratchpad, 0, MemorySize::Scratchpad);
 		std::memset(MemControl, 0, sizeof(MemControl));
 		MemControl2 = 0;
@@ -66,11 +63,12 @@ namespace Bus {
 		const auto offset = address & 0xFFFF;
 		const auto pointer = readPages[page];
 
-		// TODO: Check if Cache is isolated
-		// TODO: Add approp cycle BIAS
+		if (cpu.isCacheIsolated()) return 0;
+
+		cpu.addCycles(CycleBias::RAM);
 
 		if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
-			cpu.cycles
+			cpu.addCycles(CycleBias::ROM);
 		}
 
 		// BIOS/RAM Fastmem Reads
@@ -104,8 +102,13 @@ namespace Bus {
 		const auto offset = address & 0xFFFF;
 		const auto pointer = readPages[page];
 
-		// TODO: Check if Cache is isolated
-		// TODO: Add approp cycle BIAS
+		if (cpu.isCacheIsolated()) return 0;
+
+		cpu.addCycles(CycleBias::RAM);
+
+		if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
+			cpu.addCycles(CycleBias::ROM);
+		}
 
 		// BIOS/RAM Fastmem Reads
 		if (pointer != 0) {
@@ -138,8 +141,13 @@ namespace Bus {
 		const auto offset = address & 0xFFFF;
 		const auto pointer = readPages[page];
 
-		// TODO: Check if Cache is isolated
-		// TODO: Add approp cycle BIAS
+		if (cpu.isCacheIsolated()) return 0;
+
+		cpu.addCycles(CycleBias::RAM);
+
+		if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
+			cpu.addCycles(CycleBias::ROM);
+		}
 
 		// BIOS/RAM Fastmem Reads
 		if (pointer != 0) {
@@ -171,8 +179,13 @@ namespace Bus {
 		const auto offset = address & 0xFFFF;
 		const auto pointer = writePages[page];
 
-		// TODO: Check if Cache is isolated
-		// TODO: Add approp cycle BIAS
+		if (cpu.isCacheIsolated()) return;
+
+		cpu.addCycles(CycleBias::RAM);
+
+		if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
+			cpu.addCycles(CycleBias::ROM);
+		}
 
 		// BIOS/RAM Fastmem Writes
 		if (pointer != 0) {
@@ -203,8 +216,13 @@ namespace Bus {
 		const auto offset = address & 0xFFFF;
 		const auto pointer = writePages[page];
 
-		// TODO: Check if Cache is isolated
-		// TODO: Add approp cycle BIAS
+		if (cpu.isCacheIsolated()) return;
+
+		cpu.addCycles(CycleBias::RAM);
+
+		if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
+			cpu.addCycles(CycleBias::ROM);
+		}
 
 		// BIOS/RAM Fastmem Writes
 		if (pointer != 0) {
@@ -236,8 +254,13 @@ namespace Bus {
 		const auto offset = address & 0xFFFF;
 		const auto pointer = writePages[page];
 
-		// TODO: Check if Cache is isolated
-		// TODO: Add approp cycle BIAS
+		if (cpu.isCacheIsolated()) return;
+
+		cpu.addCycles(CycleBias::RAM);
+
+		if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
+			cpu.addCycles(CycleBias::ROM);
+		}
 
 		// BIOS/RAM Fastmem Writes
 		if (pointer != 0) {
@@ -265,6 +288,11 @@ namespace Bus {
 		// GPU
 		// TIMERS
 		Log::warn("[BUS] [WRITE32] Unhandled write at address: {:08x} : value: {:08x}\n", address, value);
+	}
+
+	void Bus::triggerInterrupt(IRQ irq) {
+		ISTAT |= (1 << static_cast<u16>(irq));
+		cpu.triggerInterrupt();
 	}
 
 }  // namespace Bus

@@ -1,16 +1,24 @@
 #include "cpu.hpp"
 
+#include "bus/bus.hpp"
 #include "support/log.hpp"
 
 namespace Cpu {
 
-	Cpu::Cpu() {}
+	Cpu::Cpu(Bus::Bus& bus) : bus(bus) { reset(); }
 
 	Cpu::~Cpu() {}
 
 	void Cpu::reset() {
-		m_regs.gpr.reset();
-		m_regs.cop0.reset();
+		for (auto& reg : regs.gpr) {
+			reg = 0;
+		}
+
+		regs.cop0.status = 0;
+		regs.cop0.cause = 0;
+		regs.cop0.bva = 0;
+		regs.cop0.epc = 0;
+
 		delayedLoad.reset();
 		memoryLoad.reset();
 		writeBack.reset();
@@ -23,38 +31,61 @@ namespace Cpu {
 		delaySlot = false;
 		branchTakenDelaySlot = false;
 		totalCycles = 0;
-		cyclesToRun = 0;
+		cycleTarget = 0;
 		ttyBuffer.clear();
 	}
 
-	void Cpu::step() {}
+	void Cpu::step() {
+		// Fetch
+		m_instruction = bus.read<u32>(PC);
 
-	void Cpu::fetch() {}
+		if ((PC % 4) != 0) {
+			Log::warn("Unaligned PC {:#x}\n", PC);
+			ExceptionHandler(BadLoadAddress);
+			return;
+		}
 
-	void Cpu::execute() {}
+		// Advance PC
+		currentPC = PC;
+		PC = nextPC;
+		nextPC += 4;
 
-	void Cpu::memory() {
+		// Update delay slot info
+		delaySlot = branch;
+		branchTakenDelaySlot = branchTaken;
+		branchTaken = false;
+		branch = false;
+
+		// Get opcode function from LUT and execute
+		const auto func = basic[m_instruction.opcode];
+		(this->*func)();
+
+		// Do memory access
 		if (delayedLoad.reg != memoryLoad.reg) {
-			m_regs.gpr[memoryLoad.reg] = memoryLoad.value;
+			regs.gpr[memoryLoad.reg] = memoryLoad.value;
 		}
 		memoryLoad = delayedLoad;
 		delayedLoad.reset();
-	}
 
-	void Cpu::writeback() {
-		m_regs.gpr[writeBack.reg] = writeBack.value;
+		// Write back registers
+		regs.gpr[writeBack.reg] = writeBack.value;
 		writeBack.reset();
+
+		handleKernelCalls();
+		checkInterrupts();
+
+		addCycles(Bus::CycleBias::CPI);
 	}
 
 	void Cpu::handleKernelCalls() {
-		const u32 pc = pc & 0x1FFFFF;
-		const u32 func = m_regs.gpr[9];
+		const u32 pc = PC & 0x1FFFFF;
+		const u32 func = regs.gpr[9];
 
 		if (pc == 0xB0) {
 			switch (func) {
 				// putchar
 				case 0x3D: {
-					const char c = m_regs.gpr[A0];
+					const char c = regs.gpr[A0];
 					if (c == '\r') break;
 					if (c == '\n') {
 						Log::info("{}\n", ttyBuffer);
@@ -67,9 +98,51 @@ namespace Cpu {
 		}
 	}
 
-	void Cpu::checkInterrupts() {}
+	void Cpu::triggerInterrupt() {
+		regs.cop0.cause &= static_cast<u32>(~0x400);
+		if (bus.isIRQPending()) {
+			regs.cop0.cause |= static_cast<u32>(0x400);
+		}
+	}
 
-	void Cpu::ExceptionHandler(Exception cause, u32 cop) {}
+	void Cpu::checkInterrupts() {
+		bool iec = (regs.cop0.status & 1);
+		u8 im = (regs.cop0.status >> 8) & 0xFF;
+		u8 ip = (regs.cop0.cause >> 8) & 0xFF;
+
+		if (iec && (im & ip) > 0) {
+			ExceptionHandler(Exception::Interrupt);
+		}
+	}
+
+	void Cpu::ExceptionHandler(Exception cause, u32 cop) {
+		auto& sr = regs.cop0.status;
+		auto vector = ExceptionHandlerAddr[Helpers::isBitSet(sr, 22)];
+
+		auto mode = sr & 0x3F;
+		sr = (sr & ~0x3f);
+		sr = sr | ((mode << 2) & 0x3F);
+
+		regs.cop0.cause &= ~0x7C;
+		regs.cop0.cause = static_cast<u32>(cause) << 2;
+
+		if (cause == Exception::Interrupt) {
+			regs.cop0.epc = PC;
+			delaySlot = branch;
+			branchTakenDelaySlot = branchTaken;
+		} else {
+			regs.cop0.epc = currentPC;
+		}
+
+		if (delaySlot) {
+			regs.cop0.epc -= 4;
+			regs.cop0.cause |= (1 << 31);
+		} else {
+			regs.cop0.cause &= ~(1 << 31);
+		}
+
+		setPC(vector);
+	}
 
 	void Cpu::Branch(bool link) {}
 

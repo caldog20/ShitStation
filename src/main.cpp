@@ -1,3 +1,2 @@
-#include "support/helpers.hpp"
 
-auto main() -> int { return 0; }
+auto main() -> int {}

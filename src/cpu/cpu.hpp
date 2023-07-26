@@ -1,10 +1,14 @@
 #pragma once
+#include <array>
 #include <cassert>
 #include <string>
 
 #include "BitField.hpp"
 #include "support/helpers.hpp"
-#include "support/register.hpp"
+
+namespace Bus {
+	class Bus;
+}
 
 namespace Cpu {
 	// clang-format off
@@ -56,9 +60,9 @@ namespace Cpu {
 		u32 reg;
 		u32 value;
 
-		void reset() { reg = value = 0; }
+		inline void reset() { reg = value = 0; }
 
-		void set(u32 rt, u32 val) {
+		inline void set(u32 rt, u32 val) {
 			reg = rt;
 			value = val;
 		}
@@ -75,16 +79,23 @@ namespace Cpu {
 		IllegalInstruction = 0xA,
 	};
 
+	struct Cop0Regs {
+		u32 cause;
+		u32 status;
+		u32 bva;
+		u32 epc;
+	};
+
 	struct Regs {
-		RegisterSet<u32, 34> gpr;
-		RegisterSet<u32, 64> cop0;
+		std::array<u32, 34> gpr;
+		Cop0Regs cop0;
 	};
 
 	class Cpu {
 		using funcPtr = void (Cpu::*)();
 
 	  public:
-		Cpu();
+		Cpu(Bus::Bus& bus);
 		~Cpu();
 
 		void reset();
@@ -96,23 +107,21 @@ namespace Cpu {
 			nextPC = pc + 4;
 		}
 
-		[[nodiscard]] bool isCacheIsolated() const { return (m_regs.cop0[SR] & 0x10000); }
+		[[nodiscard]] bool isCacheIsolated() const { return regs.cop0.status & (1 << 16); }
 
 		[[nodiscard]] auto getTotalCycles() const -> Cycles { return totalCycles; }
 		[[nodiscard]] auto getCycleTarget() const -> Cycles { return cycleTarget; }
 		void setCycleTarget(Cycles cycles) { cycleTarget = cycles; }
 		void addCycles(Cycles cycles) { totalCycles += cycles; }
+		void triggerInterrupt();
 
 	  private:
-		inline void fetch();
-		inline void execute();
-		inline void memory();
-		inline void writeback();
+		Bus::Bus& bus;
 		void handleKernelCalls();
 		void checkInterrupts();
 
 		Instruction m_instruction{0};
-		Regs m_regs;
+		Regs regs;
 
 		Writeback delayedLoad;
 		Writeback memoryLoad;

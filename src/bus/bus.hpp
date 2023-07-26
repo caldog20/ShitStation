@@ -3,6 +3,10 @@
 
 #include "support/helpers.hpp"
 
+namespace Cpu {
+	class Cpu;
+}
+
 namespace Bus {
 
 	enum IRQ : u16 { VBLANK = 0, GPU, CDROM, DMA, TIMER0, TIMER1, TIMER2, PAD, SIO, SPU, LIGHTPEN };
@@ -23,15 +27,15 @@ namespace Bus {
 
 	namespace CycleBias {
 		enum : u32 {
-			ROM = 21,
+			ROM = 20,
 			RAM = 1,
-			CPU = 2,
+			CPI = 2,
 		};
 	}
 
 	class Bus {
 	  public:
-		Bus();
+		Bus(Cpu::Cpu& cpu);
 		~Bus();
 
 		void reset();
@@ -45,6 +49,7 @@ namespace Bus {
 		void write32(u32 address, u32 value);
 
 		[[nodiscard]] bool isIRQPending() const { return (ISTAT & IMASK) != 0; }
+		void triggerInterrupt(IRQ irq);
 
 		template <typename T>
 		T read(u32 address) {
@@ -81,6 +86,7 @@ namespace Bus {
 		}
 
 	  private:
+		Cpu::Cpu& cpu;
 		u32 CacheControl;
 		u32 MemControl[36];
 		u32 MemControl2;
