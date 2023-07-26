@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(
-        shitstation
+        ShitStation
         VERSION 0.1.0
         LANGUAGES C CXX
 )
@@ -26,8 +26,6 @@ include(cmake/CompilerWarnings.cmake)
 include(cmake/Sanitizers.cmake)
 include(cmake/StandardProjectSettings.cmake)
 include(cmake/IPO.cmake)
-
-
 
 if(WIN32)
     add_compile_definitions(NOMINMAX)
@@ -59,7 +57,7 @@ if (ENABLE_IPO)
     enable_ipo()
 endif()
 
-add_executable(ShitStation
+add_executable(${PROJECT_NAME}
         src/main.cpp
         src/support/log.hpp
         src/support/helpers.hpp
@@ -70,10 +68,10 @@ add_executable(ShitStation
         src/bus/bus.hpp
 )
 
-target_link_libraries(ShitStation PRIVATE SDL2::SDL2-static glad fmt::fmt magic_enum::magic_enum BitField)
-target_include_directories(ShitStation PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static glad fmt::fmt magic_enum::magic_enum BitField)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-set_target_warnings(ShitStation WARNINGS_AS_ERRORS)
+set_target_warnings(${PROJECT_NAME} WARNINGS_AS_ERRORS)
 
 
 enable_sanitizers(ShitStation
