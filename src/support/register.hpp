@@ -5,66 +5,66 @@
 template <typename T, size_t size>
 class RegisterSet {
   public:
-	RegisterSet() {}
+    RegisterSet() {}
 
-	T& operator[](size_t index) {
-		assert(index < size);
-		return regs[index];
-	}
+    T& operator[](size_t index) {
+        assert(index < size);
+        return regs[index];
+    }
 
-	T operator[](size_t index) const {
-		assert(index < size);
-		return regs[index];
-	}
+    T operator[](size_t index) const {
+        assert(index < size);
+        return regs[index];
+    }
 
-	void set(size_t index, T value) {
-		assert(index < size);
-		regs[index] = value;
-	}
+    void set(size_t index, T value) {
+        assert(index < size);
+        regs[index] = value;
+    }
 
-	T get(size_t index) {
-		assert(index < size);
-		return regs[index];
-	}
+    T get(size_t index) {
+        assert(index < size);
+        return regs[index];
+    }
 
-	void reset() {
-		for (auto& reg : regs) {
-			reg = 0;
-		}
-	}
+    void reset() {
+        for (auto& reg : regs) {
+            reg = 0;
+        }
+    }
 
   private:
-	T regs[size] = {0};
+    T regs[size] = {0};
 };
 
 template <typename T>
 class Register {
   public:
-	Register() {}
-	virtual ~Register() {}
+    Register() {}
+    virtual ~Register() {}
 
-	Register(const Register&) = default;
-	Register(Register&&) = default;
-	Register& operator=(const Register&) = default;
-	Register& operator=(Register&&) = default;
+    Register(const Register&) = default;
+    Register(Register&&) = default;
+    Register& operator=(const Register&) = default;
+    Register& operator=(Register&&) = default;
 
-	virtual T get() { return value; }
-	virtual void set(T value) { this->value = value; }
+    virtual T get() { return value; }
+    virtual void set(T value) { this->value = value; }
 
-	operator T() { return get(); }
+    operator T() { return get(); }
 
-	void operator=(T value) { set(value); }
+    void operator=(T value) { set(value); }
 
   private:
-	T value;
+    T value;
 
   public:
-	bool operator==(const Register& rhs) const { return value == rhs.value; }
-	bool operator!=(const Register& rhs) const { return rhs != *this; }
-	bool operator<(const Register& rhs) const { return value < rhs.value; }
-	bool operator>(const Register& rhs) const { return rhs < *this; }
-	bool operator<=(const Register& rhs) const { return rhs >= *this; }
-	bool operator>=(const Register& rhs) const { return *this >= rhs; }
+    bool operator==(const Register& rhs) const { return value == rhs.value; }
+    bool operator!=(const Register& rhs) const { return rhs != *this; }
+    bool operator<(const Register& rhs) const { return value < rhs.value; }
+    bool operator>(const Register& rhs) const { return rhs < *this; }
+    bool operator<=(const Register& rhs) const { return rhs >= *this; }
+    bool operator>=(const Register& rhs) const { return *this >= rhs; }
 };
 
 //#define REGISTER(name, type)                    \
