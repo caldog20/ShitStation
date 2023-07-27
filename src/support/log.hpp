@@ -11,15 +11,20 @@ namespace Log {
 		return true;
 	}
 
+	//	template <typename... Args>
+	//	static void warn(const char* fmt, Args&... args) {
+	//		fmt::print(fg(fmt::color::red), fmt, args...);
+	//	}
+
 	template <typename... Args>
-	static void warn(const char* fmt, Args&... args) {
+	static void warn(const char* fmt, const Args&... args) {
 		fmt::print(fg(fmt::color::red), fmt, args...);
 	}
 
 	template <typename... Args>
-	static void debug(const char* fmt, Args&... args) {
+	static void debug(const char* fmt, const Args&... args) {
 		if constexpr (debugBuild()) {
-			fmt::print(fg(fmt::color::green), fmt, std::forward<Args>(args)...);
+			fmt::print(fg(fmt::color::green), fmt, args...);
 		}
 	}
 

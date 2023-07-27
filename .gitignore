@@ -29,7 +29,7 @@ cmake-build-*/
 *.lib
 
 # Executables
-#*.exe
+*.exe
 *.out
 *.app
 *.dol

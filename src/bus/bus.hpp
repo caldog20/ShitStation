@@ -1,5 +1,6 @@
 #pragma once
 #include <cassert>
+#include <vector>
 
 #include "support/helpers.hpp"
 
@@ -72,18 +73,31 @@ namespace Bus {
 		}
 
 		template <typename T = u8>
-		[[nodiscard]] auto getRamPointer(u32 address = 0) -> T* {
+		T* getRamPointer(u32 address = 0) {
 			auto addr = mask(address);
 			assert(RAM.contains(addr));
 			return (T*)&ram[RAM.offset(addr)];
 		}
 
 		template <typename T = u8>
-		[[nodiscard]] auto getBiosPointer(u32 address = 0) -> T* {
-			auto addr = mask(address);
-			assert(BIOS.contains(addr));
-			return (T*)&bios[BIOS.offset(addr)];
+		T* getBiosPointer() {
+			return (T*)&bios[0];
 		}
+
+		void shellReached() {
+			if (sideload) {
+				doSideload();
+			}
+		}
+
+		void setSideload(u32 address, u32 pc, std::vector<u8> exe) {
+			sideloadEXE = std::move(exe);
+			sideloadAddr = address;
+			sideloadPC = pc;
+			sideload = true;
+		}
+
+		void doSideload();
 
 	  private:
 		Cpu::Cpu& cpu;
@@ -99,6 +113,11 @@ namespace Bus {
 
 		uintptr_t* readPages = nullptr;
 		uintptr_t* writePages = nullptr;
+
+		u32 sideloadPC;
+		u32 sideloadAddr;
+		std::vector<u8> sideloadEXE;
+		bool sideload = false;
 
 		const Range RAM = {0x00000000, MemorySize::Ram};
 		const Range BIOS = {0xBFC00000, MemorySize::Bios};

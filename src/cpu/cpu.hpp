@@ -89,6 +89,9 @@ namespace Cpu {
 	struct Regs {
 		std::array<u32, 34> gpr;
 		Cop0Regs cop0;
+
+		inline u32 get(size_t index) { return gpr[index]; }
+		inline void set(size_t index, u32 value) { gpr[index] = value; }
 	};
 
 	class Cpu {
@@ -100,6 +103,7 @@ namespace Cpu {
 
 		void reset();
 		void step();
+		void run();
 
 		[[nodiscard]] auto getPC() const -> u32 { return PC; }
 		void setPC(u32 pc) {
@@ -110,6 +114,8 @@ namespace Cpu {
 		[[nodiscard]] bool isCacheIsolated() const { return regs.cop0.status & (1 << 16); }
 
 		[[nodiscard]] auto getTotalCycles() const -> Cycles { return totalCycles; }
+		Cycles& getCycleRef() { return totalCycles; }
+		Cycles& getCycleTargetRef() { return cycleTarget; }
 		[[nodiscard]] auto getCycleTarget() const -> Cycles { return cycleTarget; }
 		void setCycleTarget(Cycles cycles) { cycleTarget = cycles; }
 		void addCycles(Cycles cycles) { totalCycles += cycles; }
@@ -120,7 +126,7 @@ namespace Cpu {
 		void handleKernelCalls();
 		void checkInterrupts();
 
-		Instruction m_instruction{0};
+		Instruction instruction{0};
 		Regs regs;
 
 		Writeback delayedLoad;
@@ -140,6 +146,7 @@ namespace Cpu {
 
 		std::string ttyBuffer;
 		const u32 RESET_VECTOR = 0xbfc00000;
+		const u32 SHELL_PC = 0x80030000;
 		const u32 ExceptionHandlerAddr[2] = {0x80000080, 0xbfc00180};
 
 		void ExceptionHandler(Exception cause, u32 cop = 0);

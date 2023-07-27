@@ -63,9 +63,13 @@ add_executable(${PROJECT_NAME}
         src/support/helpers.hpp
         src/cpu/cpu.cpp
         src/cpu/cpu.hpp
-        src/support/register.hpp
+        #src/support/register.hpp
         src/bus/bus.cpp
         src/bus/bus.hpp
+        src/playstation.cpp
+        src/playstation.hpp
+        src/scheduler/scheduler.cpp
+        src/scheduler/scheduler.hpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static glad fmt::fmt magic_enum::magic_enum BitField)
