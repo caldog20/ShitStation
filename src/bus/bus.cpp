@@ -58,6 +58,21 @@ void Bus::reset() {
     ISTAT = IMASK = 0;
 }
 
+u32 Bus::fetch(u32 address) {
+    const auto page = address >> 16;
+    const auto offset = address & 0xFFFF;
+    const auto pointer = readPages[page];
+
+    if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
+        cpu.addCycles(CycleBias::ROM);
+    }
+
+    // BIOS/RAM Fastmem Reads
+    if (pointer != 0) {
+        return *(u32*)(pointer + offset);
+    }
+}
+
 u8 Bus::read8(u32 address) {
     const auto page = address >> 16;
     const auto offset = address & 0xFFFF;
@@ -125,7 +140,15 @@ u16 Bus::read16(u32 address) {
     // Slow Reads to MMIO
     auto hw_address = mask(address);
 
-    // IRQ
+    if (IRQCONTROL.contains(hw_address)) {
+        auto offset = IRQCONTROL.offset(hw_address);
+        if (offset == 0) {
+            return ISTAT;
+        } else if (offset == 4) {
+            return IMASK;
+        }
+    }
+
     // SPU
     // PAD
     // SIO
@@ -164,7 +187,15 @@ u32 Bus::read32(u32 address) {
     // Slow Reads to MMIO
     auto hw_address = mask(address);
 
-    // IRQ
+    if (IRQCONTROL.contains(hw_address)) {
+        auto offset = IRQCONTROL.offset(hw_address);
+        if (offset == 0) {
+            return ISTAT;
+        } else if (offset == 4) {
+            return IMASK;
+        }
+    }
+
     // DMA
     // TIMERS
     // EXP1
@@ -241,9 +272,18 @@ void Bus::write16(u32 address, u16 value) {
     // Slow writes to MMIO
     auto hw_address = mask(address);
 
+    if (IRQCONTROL.contains(hw_address)) {
+        auto offset = IRQCONTROL.offset(hw_address);
+        if (offset == 0) {
+            ISTAT &= (value & 0x7FF);
+        } else if (offset == 4) {
+            IMASK = (value & 0x7FF);
+        }
+        return;
+    }
+
     // TIMERS
     // SPU
-    // IRQ
     // PAD
     // SIO
     Log::warn("[BUS] [WRITE16] Unhandled write at address: {:08x} : value: {:08x}\n", address, value);
@@ -279,11 +319,33 @@ void Bus::write32(u32 address, u32 value) {
     // Slow writes to MMIO
     auto hw_address = mask(address);
 
+    if (IRQCONTROL.contains(hw_address)) {
+        auto offset = IRQCONTROL.offset(hw_address);
+        if (offset == 0) {
+            ISTAT &= (value & 0x7FF);
+        } else if (offset == 4) {
+            IMASK = (value & 0x7FF);
+        }
+        return;
+    }
+
+    if (MEMCONTROL.contains(hw_address)) {
+        auto offset = MEMCONTROL.offset(hw_address);
+        MemControl[offset >> 2] = value;
+        return;
+    }
+
+    if (MEMCONTROL2.contains(hw_address)) {
+        MemControl2 = value;
+        return;
+    }
+
+    if (CACHECONTROL.contains(hw_address)) {
+        CacheControl = value;
+        return;
+    }
+
     // SPU
-    // IRQ
-    // MEMCONTROL
-    // MEMCONTROL2
-    // CACHECONTROL
     // DMA
     // GPU
     // TIMERS

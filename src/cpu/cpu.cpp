@@ -39,8 +39,8 @@ void Cpu::run() {}
 
 void Cpu::step() {
     // Fetch
-    instruction = bus.read<u32>(PC);
-
+    instruction = bus.fetch(PC);
+    //    Log::info("Count: {} PC: {:#08x}\n", count, PC);
     if ((PC % 4) != 0) {
         Log::warn("[CPU] Unaligned PC {:#x}\n", PC);
         ExceptionHandler(BadLoadAddress);

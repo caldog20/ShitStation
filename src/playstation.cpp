@@ -45,7 +45,7 @@ void Playstation::tempScheduleVBlank() {
     scheduler.scheduleEvent(cyclesPerFrame, [&]() {
         bus.triggerInterrupt(Bus::IRQ::VBLANK);
         vblank = true;
-        Log::debug("VBLANK at {} cycles\n", cpu.getTotalCycles());
+        //        Log::debug("VBLANK at {} cycles\n", cpu.getTotalCycles());
     });
 }
 

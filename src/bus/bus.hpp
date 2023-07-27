@@ -52,6 +52,8 @@ class Bus {
     [[nodiscard]] bool isIRQPending() const { return (ISTAT & IMASK) != 0; }
     void triggerInterrupt(IRQ irq);
 
+    u32 fetch(u32 address);
+
     template <typename T>
     T read(u32 address) {
         if constexpr (std::is_same_v<T, u32>)
@@ -102,7 +104,7 @@ class Bus {
   private:
     Cpu::Cpu& cpu;
     u32 CacheControl;
-    u32 MemControl[36];
+    u32 MemControl[9];
     u32 MemControl2;
     u16 ISTAT;
     u16 IMASK;
