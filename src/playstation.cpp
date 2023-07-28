@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-Playstation::Playstation() : cpu(bus), bus(cpu), scheduler(bus, cpu) { reset(); }
+Playstation::Playstation() : bus(cpu, dma), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler) { reset(); }
 
 Playstation::~Playstation() {}
 

@@ -1,11 +1,12 @@
 #include "bus.hpp"
 
 #include "cpu/cpu.hpp"
+#include "dma/dmacontroller.hpp"
 #include "support/log.hpp"
 
 namespace Bus {
 
-Bus::Bus(Cpu::Cpu& cpu) : cpu(cpu) {
+Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma) : cpu(cpu), dma(dma) {
     try {
         ram = new u8[MemorySize::Ram];
         bios = new u8[MemorySize::Bios];
@@ -56,6 +57,8 @@ void Bus::reset() {
     MemControl2 = 0;
     CacheControl = 0;
     ISTAT = IMASK = 0;
+    std::memset(timers, 0, sizeof(timers));
+    std::memset(spu, 0, sizeof(spu));
 }
 
 u32 Bus::fetch(u32 address) {
@@ -149,11 +152,19 @@ u16 Bus::read16(u32 address) {
         }
     }
 
-    // SPU
+    if (SPU.contains(hw_address)) {
+        auto offset = SPU.offset(hw_address);
+        return *(u16*)(spu + offset);
+    }
+
+    if (TIMERS.contains(hw_address)) {
+        auto offset = TIMERS.offset(hw_address);
+        return *(u16*)(timers + offset);
+    }
+
     // PAD
     // SIO
     // EXP1
-    // TIMERS
 
     Log::warn("[BUS] [READ16] Unhandled read at address: {:08x}\n", address);
     return 0;
@@ -187,6 +198,16 @@ u32 Bus::read32(u32 address) {
     // Slow Reads to MMIO
     auto hw_address = mask(address);
 
+    if (GPU.contains(hw_address)) {
+        auto offset = GPU.offset(hw_address);
+        if (offset == 0) {
+            return 0;
+        }
+        if (offset == 4) {
+            return 0b01011110100000000000000000000000;
+        }
+    }
+
     if (IRQCONTROL.contains(hw_address)) {
         auto offset = IRQCONTROL.offset(hw_address);
         if (offset == 0) {
@@ -196,8 +217,16 @@ u32 Bus::read32(u32 address) {
         }
     }
 
-    // DMA
-    // TIMERS
+    if (DMA.contains(hw_address)) {
+        auto offset = DMA.offset(hw_address);
+        return dma.read(offset);
+    }
+
+    if (TIMERS.contains(hw_address)) {
+        auto offset = TIMERS.offset(hw_address);
+        return *(u32*)(timers + offset);
+    }
+
     // EXP1
     // GPU
 
@@ -234,6 +263,11 @@ void Bus::write8(u32 address, u8 value) {
 
     // Slow writes to MMIO
     auto hw_address = mask(address);
+
+    if (DMA.contains(hw_address)) {
+        auto offset = DMA.offset(hw_address);
+        return dma.write8(offset, value);
+    }
 
     // PAD
     // EXP2
@@ -282,6 +316,18 @@ void Bus::write16(u32 address, u16 value) {
         return;
     }
 
+    if (SPU.contains(hw_address)) {
+        auto offset = SPU.offset(hw_address);
+        *(u16*)(spu + offset) = value;
+        return;
+    }
+
+    if (TIMERS.contains(hw_address)) {
+        auto offset = TIMERS.offset(hw_address);
+        *(u16*)(timers + offset) = value;
+        return;
+    }
+
     // TIMERS
     // SPU
     // PAD
@@ -319,6 +365,10 @@ void Bus::write32(u32 address, u32 value) {
     // Slow writes to MMIO
     auto hw_address = mask(address);
 
+    if (GPU.contains(hw_address)) {
+        return;
+    }
+
     if (IRQCONTROL.contains(hw_address)) {
         auto offset = IRQCONTROL.offset(hw_address);
         if (offset == 0) {
@@ -345,10 +395,19 @@ void Bus::write32(u32 address, u32 value) {
         return;
     }
 
+    if (DMA.contains(hw_address)) {
+        auto offset = DMA.offset(hw_address);
+        return dma.write(offset, value);
+    }
+
+    if (TIMERS.contains(hw_address)) {
+        auto offset = TIMERS.offset(hw_address);
+        *(u32*)(timers + offset) = value;
+        return;
+    }
+
     // SPU
-    // DMA
     // GPU
-    // TIMERS
     Log::warn("[BUS] [WRITE32] Unhandled write at address: {:08x} : value: {:08x}\n", address, value);
 }
 

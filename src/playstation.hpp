@@ -3,6 +3,7 @@
 
 #include "bus/bus.hpp"
 #include "cpu/cpu.hpp"
+#include "dma/dmacontroller.hpp"
 #include "scheduler/scheduler.hpp"
 #include "support/helpers.hpp"
 #include "support/log.hpp"
@@ -31,9 +32,11 @@ class Playstation {
     static constexpr u32 cyclesPerFrame = clockrate / framerate;
 
   private:
-    Cpu::Cpu cpu;
     Bus::Bus bus;
+    Cpu::Cpu cpu;
     Scheduler::Scheduler scheduler;
+    DMA::DMA dma;
+
     bool running = false;
     bool vblank = false;
     bool biosLoaded = false;

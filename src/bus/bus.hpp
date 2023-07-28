@@ -7,6 +7,9 @@
 namespace Cpu {
 class Cpu;
 }
+namespace DMA {
+class DMA;
+}
 
 namespace Bus {
 
@@ -36,7 +39,7 @@ enum : u32 {
 
 class Bus {
   public:
-    Bus(Cpu::Cpu& cpu);
+    Bus(Cpu::Cpu& cpu, DMA::DMA& dma);
     ~Bus();
 
     void reset();
@@ -102,12 +105,19 @@ class Bus {
     void doSideload();
 
   private:
+    friend class DMA::DMA;
+
     Cpu::Cpu& cpu;
+    DMA::DMA& dma;
+
     u32 CacheControl;
     u32 MemControl[9];
     u32 MemControl2;
     u16 ISTAT;
     u16 IMASK;
+
+    u8 spu[0x180];
+    u8 timers[0x30];
 
     u8* ram = nullptr;
     u8* bios = nullptr;
@@ -123,7 +133,7 @@ class Bus {
 
     const Range RAM = {0x00000000, MemorySize::Ram};
     const Range BIOS = {0xBFC00000, MemorySize::Bios};
-    const Range SPU = {0x1F801C00, 0x180};
+    const Range SPU = {0x1F801C00, 0x280};
     const Range CDROM = {0x1F801800, 4};
     const Range CACHECONTROL = {0xFFFE0130, 4};
     const Range PAD = {0x1F801040, 16};
@@ -132,7 +142,7 @@ class Bus {
     const Range IRQCONTROL = {0x1F801070, 8};
     const Range GPU = {0x1F801810, 8};
     const Range MDEC = {0x1F801820, 8};
-    const Range DMA = {0x1F801080, 0x80};
+    const Range DMA = {0x1F801080, 0x78};
     const Range TIMERS = {0x1F801100, 0x30};
     const Range EXP1 = {0x1F000000, 0x800000};
     const Range EXP2 = {0x1F802000, 0x88};  // Includes PCSX-Redux expansion registers
