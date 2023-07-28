@@ -163,7 +163,7 @@ void Cpu::RFE() {
     u32 mode = regs.cop0.status & 0x3F;
     regs.cop0.status &= ~(u32)0xF;
     regs.cop0.status |= mode >> 2;
-    Log::debug("Rreturn from Exception\n");
+    Log::debug("Return from Exception\n");
 }
 
 void Cpu::SYSCALL() { ExceptionHandler(Exception::Syscall); }

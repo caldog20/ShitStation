@@ -30,8 +30,8 @@ class Timers {
 
     void reset();
 
-    u16 read(u32 address);
-    void write(u32 address, u16 value);
+    u16 read(u32 offset);
+    void write(u32 offset, u16 value);
 
     void update();
 

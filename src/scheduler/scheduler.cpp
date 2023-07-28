@@ -1,6 +1,7 @@
 #include "scheduler.hpp"
-#include "support/log.hpp"
+
 #include "magic_enum.hpp"
+#include "support/log.hpp"
 
 namespace Scheduler {
 

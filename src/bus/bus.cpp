@@ -161,7 +161,7 @@ u16 Bus::read16(u32 address) {
 
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
-        //        return timers.read(offset);
+        return timers.read(offset);
         return 0;
     }
 
@@ -227,7 +227,7 @@ u32 Bus::read32(u32 address) {
 
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
-        //        return timers.read(offset);
+        return timers.read(offset);
         return 0;
     }
 
@@ -328,11 +328,10 @@ void Bus::write16(u32 address, u16 value) {
 
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
-        //        timers.write(offset, value);
+        timers.write(offset, value);
         return;
     }
 
-    // TIMERS
     // SPU
     // PAD
     // SIO
@@ -406,7 +405,7 @@ void Bus::write32(u32 address, u32 value) {
 
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
-        //        timers.write(offset, value);
+        timers.write(offset, value);
         return;
     }
 
