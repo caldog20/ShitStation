@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-Playstation::Playstation() : bus(cpu, dma), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler) { reset(); }
+Playstation::Playstation() : bus(cpu, dma, timers), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler) { reset(); }
 
 Playstation::~Playstation() {}
 
@@ -11,6 +11,9 @@ void Playstation::reset() {
     cpu.reset();
     bus.reset();
     scheduler.reset();
+    dma.reset();
+    timers.reset();
+
     tempScheduleVBlank();  // schedule first vblank until gpu is implemented
 }
 

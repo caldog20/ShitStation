@@ -4,12 +4,11 @@
 
 #include "support/helpers.hpp"
 
-namespace Cpu {
-class Cpu;
-}
-namespace DMA {
-class DMA;
-}
+// clang-format off
+namespace Cpu { class Cpu; }
+namespace DMA { class DMA; }
+namespace Timers { class Timers; }
+// clang-format on
 
 namespace Bus {
 
@@ -39,7 +38,7 @@ enum : u32 {
 
 class Bus {
   public:
-    Bus(Cpu::Cpu& cpu, DMA::DMA& dma);
+    Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers);
     ~Bus();
 
     void reset();
@@ -109,6 +108,7 @@ class Bus {
 
     Cpu::Cpu& cpu;
     DMA::DMA& dma;
+    Timers::Timers& timers;
 
     u32 CacheControl;
     u32 MemControl[9];
@@ -116,8 +116,7 @@ class Bus {
     u16 ISTAT;
     u16 IMASK;
 
-    u8 spu[0x180];
-    u8 timers[0x30];
+    u8 spu[0x280];
 
     u8* ram = nullptr;
     u8* bios = nullptr;

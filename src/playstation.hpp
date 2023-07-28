@@ -7,6 +7,7 @@
 #include "scheduler/scheduler.hpp"
 #include "support/helpers.hpp"
 #include "support/log.hpp"
+#include "timers/timers.hpp"
 
 class Playstation {
   public:
@@ -36,6 +37,7 @@ class Playstation {
     Cpu::Cpu cpu;
     Scheduler::Scheduler scheduler;
     DMA::DMA dma;
+    Timers::Timers timers;
 
     bool running = false;
     bool vblank = false;

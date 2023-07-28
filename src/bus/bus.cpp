@@ -3,10 +3,11 @@
 #include "cpu/cpu.hpp"
 #include "dma/dmacontroller.hpp"
 #include "support/log.hpp"
+#include "timers/timers.hpp"
 
 namespace Bus {
 
-Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma) : cpu(cpu), dma(dma) {
+Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers) : cpu(cpu), dma(dma), timers(timers) {
     try {
         ram = new u8[MemorySize::Ram];
         bios = new u8[MemorySize::Bios];
@@ -57,7 +58,8 @@ void Bus::reset() {
     MemControl2 = 0;
     CacheControl = 0;
     ISTAT = IMASK = 0;
-    std::memset(timers, 0, sizeof(timers));
+
+    // temporary
     std::memset(spu, 0, sizeof(spu));
 }
 
@@ -159,7 +161,8 @@ u16 Bus::read16(u32 address) {
 
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
-        return *(u16*)(timers + offset);
+        //        return timers.read(offset);
+        return 0;
     }
 
     // PAD
@@ -224,7 +227,8 @@ u32 Bus::read32(u32 address) {
 
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
-        return *(u32*)(timers + offset);
+        //        return timers.read(offset);
+        return 0;
     }
 
     // EXP1
@@ -324,7 +328,7 @@ void Bus::write16(u32 address, u16 value) {
 
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
-        *(u16*)(timers + offset) = value;
+        //        timers.write(offset, value);
         return;
     }
 
@@ -402,7 +406,7 @@ void Bus::write32(u32 address, u32 value) {
 
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
-        *(u32*)(timers + offset) = value;
+        //        timers.write(offset, value);
         return;
     }
 

@@ -72,6 +72,8 @@ add_executable(${PROJECT_NAME}
         src/scheduler/scheduler.hpp
         src/dma/dmacontroller.cpp
         src/dma/dmacontroller.hpp
+        src/timers/timers.cpp
+        src/timers/timers.hpp
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static glad fmt::fmt magic_enum::magic_enum BitField)
