@@ -200,8 +200,8 @@ void DMA::transferFinished(Channel& channel, Port port) {
     channel.start = false;
     channel.trigger = false;
 
-    if (dicr.im & (1 << static_cast<u32>(port))) {
-        dicr.ip |= (1 << static_cast<u32>(port));
+    if (dicr.im & (1 << static_cast<u8>(port))) {
+        dicr.ip |= (1 << static_cast<u8>(port));
         checkIRQ();
     }
 }
