@@ -147,7 +147,12 @@ void Cpu::ExceptionHandler(Exception cause, u32 cop) {
         regs.cop0.cause &= ~(1 << 31);
     }
 
+    if (branchTakenDelaySlot) {
+        regs.cop0.cause |= (1 << 30);
+    }
+
     setPC(vector);
+    Log::debug("ExceptionHandler at PC {:#08x}\n", currentPC);
 }
 
 void Cpu::RFE() {
@@ -158,6 +163,7 @@ void Cpu::RFE() {
     u32 mode = regs.cop0.status & 0x3F;
     regs.cop0.status &= ~(u32)0xF;
     regs.cop0.status |= mode >> 2;
+    Log::debug("Rreturn from Exception\n");
 }
 
 void Cpu::SYSCALL() { ExceptionHandler(Exception::Syscall); }
@@ -608,7 +614,7 @@ void Cpu::LHU() {
 }
 
 void Cpu::LW() {
-    u32 address = regs.get(instruction.rs) + instruction.immse;
+    u32 address = regs.get(instruction.rs) + instruction.immse.Value();
 
     if (address % 4 != 0) {
         regs.cop0.bva = address;

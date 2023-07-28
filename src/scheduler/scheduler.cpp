@@ -1,4 +1,6 @@
 #include "scheduler.hpp"
+#include "support/log.hpp"
+#include "magic_enum.hpp"
 
 namespace Scheduler {
 
@@ -22,7 +24,10 @@ void Scheduler::reset() {
 }
 
 void Scheduler::scheduleInterrupt(Cycles cycleCount, Bus::IRQ irq) {
-    scheduleEvent(cycleCount, [&]() { bus.triggerInterrupt(irq); });
+    scheduleEvent(cycleCount, [&]() {
+        bus.triggerInterrupt(irq);
+        Log::debug("Interrupt triggered: {}\n", magic_enum::enum_name(irq));
+    });
 }
 
 }  // namespace Scheduler
