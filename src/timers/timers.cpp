@@ -70,11 +70,6 @@ void Timers::write(u32 offset, u16 value) {
     }
 }
 
-void Timers::update() {
-    auto& timer = timers[2];
-
-
-
-}
+void Timers::update() { auto& timer = timers[2]; }
 
 }  // namespace Timers

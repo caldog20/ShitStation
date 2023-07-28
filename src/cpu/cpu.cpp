@@ -178,7 +178,7 @@ void Cpu::Special() {
 // Branch and Jump Instructions
 void Cpu::Branch(bool link) {
     branchTaken = true;
-    nextPC = PC + instruction.immse * 4;
+    nextPC = PC + (instruction.immse * 4);
     if (link) {
         regs.set(RA, nextPC);
     }
@@ -214,7 +214,6 @@ void Cpu::JAL() {
 }
 
 void Cpu::JALR() {
-    // TODO Maybe skip if reg index rs == rd to prevent register clobbering
     regs.set(instruction.rd, nextPC);
     JR();
 }
@@ -614,7 +613,9 @@ void Cpu::LHU() {
 }
 
 void Cpu::LW() {
-    u32 address = regs.get(instruction.rs) + instruction.immse.Value();
+    u32 rs = regs.get(instruction.rs);
+    const auto imm = (s32)(s16)instruction.immse;
+    const auto address = rs + imm;
 
     if (address % 4 != 0) {
         regs.cop0.bva = address;

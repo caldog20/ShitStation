@@ -1,12 +1,12 @@
-#include "playstation.hpp"
+#include "psx.hpp"
 
 #include <fstream>
 
-Playstation::Playstation() : bus(cpu, dma, timers), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler) { reset(); }
+PSX::PSX() : bus(cpu, dma, timers), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler) { reset(); }
 
-Playstation::~Playstation() {}
+PSX::~PSX() {}
 
-void Playstation::reset() {
+void PSX::reset() {
     running = false;
     cpu.reset();
     bus.reset();
@@ -17,7 +17,7 @@ void Playstation::reset() {
     tempScheduleVBlank();  // schedule first vblank until gpu is implemented
 }
 
-void Playstation::runFrame() {
+void PSX::runFrame() {
     // Run until we hit vblank
     while (!vblank) {
         auto& cycleTarget = cpu.getCycleTargetRef();
@@ -32,7 +32,7 @@ void Playstation::runFrame() {
     }
 }
 
-void Playstation::start() {
+void PSX::start() {
     // Check for loaded BIOS here
     if (!biosLoaded) {
         Log::warn("No BIOS loaded\n");
@@ -42,9 +42,9 @@ void Playstation::start() {
     running = true;
 }
 
-void Playstation::stop() { running = false; }
+void PSX::stop() { running = false; }
 
-void Playstation::tempScheduleVBlank() {
+void PSX::tempScheduleVBlank() {
     scheduler.scheduleEvent(cyclesPerFrame, [&]() {
         bus.triggerInterrupt(Bus::IRQ::VBLANK);
         vblank = true;
@@ -52,7 +52,7 @@ void Playstation::tempScheduleVBlank() {
     });
 }
 
-void Playstation::update() {
+void PSX::update() {
     if (running) {
         runFrame();
     }
@@ -61,7 +61,7 @@ void Playstation::update() {
     vblank = false;
 }
 
-void Playstation::loadBIOS(const std::filesystem::path& path) {
+void PSX::loadBIOS(const std::filesystem::path& path) {
     biosLoaded = false;
     if (!std::filesystem::exists(path)) {
         Log::warn("File at {} does not exist\n", path.string());
@@ -86,9 +86,9 @@ void Playstation::loadBIOS(const std::filesystem::path& path) {
     biosLoaded = true;
 }
 
-void Playstation::loadDisc(const std::filesystem::path& path) {}
+void PSX::loadDisc(const std::filesystem::path& path) {}
 
-void Playstation::sideload(const std::filesystem::path& path) {
+void PSX::sideload(const std::filesystem::path& path) {
     u32 initialPC = 0;
     u32 size = 0;
     u32 gp = 0;

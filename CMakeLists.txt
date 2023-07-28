@@ -9,14 +9,14 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
-set(ENABLE_SANITIZER_ADDRESS OFF CACHE BOOL "Enable Address Sanitizer if available" FORCE)
-set(ENABLE_SANITIZER_LEAK OFF CACHE BOOL "Enable Leak Sanitizer if available" FORCE)
-set(ENABLE_SANITIZER_THREAD OFF CACHE BOOL "Enable Thread Sanitizer if available" FORCE)
-set(ENABLE_SANITIZER_MEMORY OFF CACHE BOOL "Enable Memory Sanitizer if available" FORCE)
-set(ENABLE_SANITIZER_UNDEFINED_BEHAVIOR OFF CACHE BOOL "Enable Undefined Behavior Sanitizer if available" FORCE)
-set(ENABLE_CACHE ON CACHE BOOL "Strictly disable caching" FORCE)
-set(ENABLE_IPO OFF CACHE BOOL "Enable Interprocedural Optimization" FORCE)
-set(WARNINGS_AS_ERRORS OFF CACHE BOOL "Enable Warnings as Errors" FORCE)
+option(ENABLE_SANITIZER_ADDRESS  "Enable Address Sanitizer if available" OFF)
+option(ENABLE_SANITIZER_LEAK  "Enable Leak Sanitizer if available" OFF)
+option(ENABLE_SANITIZER_THREAD  "Enable Thread Sanitizer if available" OFF)
+option(ENABLE_SANITIZER_MEMORY  "Enable Memory Sanitizer if available" OFF)
+option(ENABLE_SANITIZER_UNDEFINED "Enable Undefined Behavior Sanitizer if available" OFF)
+option(ENABLE_CACHE "Strictly disable caching" ON)
+option(ENABLE_IPO  "Enable Interprocedural Optimization" OFF)
+option(WARNINGS_AS_ERRORS "Enable Warnings as Errors" OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
@@ -66,8 +66,8 @@ add_executable(${PROJECT_NAME}
         #src/support/register.hpp
         src/bus/bus.cpp
         src/bus/bus.hpp
-        src/playstation.cpp
-        src/playstation.hpp
+        src/psx.cpp
+        src/psx.hpp
         src/scheduler/scheduler.cpp
         src/scheduler/scheduler.hpp
         src/dma/dmacontroller.cpp
@@ -79,13 +79,13 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static glad fmt::fmt magic_enum::magic_enum BitField)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-set_target_warnings(${PROJECT_NAME} WARNINGS_AS_ERRORS)
+set_target_warnings(${PROJECT_NAME} ${WARNINGS_AS_ERRORS})
 
 
-enable_sanitizers(ShitStation
+enable_sanitizers(${PROJECT_NAME}
         ${ENABLE_SANITIZER_ADDRESS}
         ${ENABLE_SANITIZER_LEAK}
+        ${ENABLE_SANITIZER_UNDEFINED}
         ${ENABLE_SANITIZER_THREAD}
         ${ENABLE_SANITIZER_MEMORY}
-        ${ENABLE_SANITIZER_UNDEFINED_BEHAVIOR}
 )

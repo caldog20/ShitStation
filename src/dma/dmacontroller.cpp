@@ -5,6 +5,7 @@
 
 #include "bus/bus.hpp"
 #include "scheduler/scheduler.hpp"
+#include "support/log.hpp"
 
 namespace DMA {
 
@@ -37,7 +38,7 @@ u32 DMA::read(u32 offset) {
         case 0: return ch.base;
         case 4: return static_cast<u32>(ch.blockSize | (ch.blockCount << 16));
         case 8:
-            u32 value;
+            u32 value = 0;
             value = static_cast<u32>(ch.direction);
             value |= ch.step << 1;
             if (ch.chop) {
@@ -88,7 +89,7 @@ void DMA::write(u32 offset, u32 value) {
     auto& ch = channels[channel];
 
     switch (offset & 0xF) {
-        case 0: ch.base = value & 0xFFFFFF; return;
+        case 0: ch.base = value; return;
         case 4:
             ch.blockSize = static_cast<u16>(value);
             ch.blockCount = static_cast<u16>(value >> 16);
@@ -136,7 +137,8 @@ void DMA::startDMA(Channel& channel, Port port) {
 }
 
 void DMA::dmaLinkedList(Channel& channel, Port port) {
-    u32 address = channel.base & 0x1FFFFC;
+    Log::debug("[DMA] DMA linked list\n");
+    u32 address = channel.base;
     assert(port == Port::GPU);
     while (true) {
         u32 header = bus.read<u32>(address);
@@ -148,7 +150,7 @@ void DMA::dmaLinkedList(Channel& channel, Port port) {
             size--;
         }
 
-        if (header & 0x800000) {
+        if (header & (1 << 23)) {
             break;
         }
         address = header & 0x1FFFFC;
@@ -157,12 +159,13 @@ void DMA::dmaLinkedList(Channel& channel, Port port) {
 }
 
 void DMA::dmaBlockCopy(Channel& channel, Port port) {
+    Log::debug("[DMA] DMA block copy\n");
     int step = channel.step == Step::Increment ? 4 : -4;
     u32 address = channel.base;
     u32 remsize = getTransferSize(channel);
-    u32 value = 0;
     while (remsize > 0) {
         u32 addr = address & 0x1FFFFC;
+        u32 value = 0;
         if (channel.direction == Direction::ToRam) {
             switch (port) {
                 case Port::OTC: {
@@ -190,6 +193,7 @@ void DMA::dmaBlockCopy(Channel& channel, Port port) {
                 }
             }
         }
+
         address += step;
         remsize--;
     }
@@ -210,7 +214,7 @@ u32 DMA::getTransferSize(Channel& channel) {
     if (channel.sync == SyncMode::Manual) {
         return static_cast<u32>(channel.blockSize);
     } else if (channel.sync == SyncMode::Request) {
-        return static_cast<u32>(channel.blockSize * channel.blockCount);
+        return channel.blockSize * channel.blockCount;
     }
 }
 

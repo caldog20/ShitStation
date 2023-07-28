@@ -106,6 +106,9 @@ u8 Bus::read8(u32 address) {
     // Slow Reads to MMIO
     auto hw_address = mask(address);
 
+    if (PAD.contains(hw_address)) {
+        return 0xff;
+    }
     // PAD
     // EXP1
     // EXP2
@@ -168,7 +171,6 @@ u16 Bus::read16(u32 address) {
     // PAD
     // SIO
     // EXP1
-
     Log::warn("[BUS] [READ16] Unhandled read at address: {:08x}\n", address);
     return 0;
 }
@@ -203,12 +205,13 @@ u32 Bus::read32(u32 address) {
 
     if (GPU.contains(hw_address)) {
         auto offset = GPU.offset(hw_address);
-        if (offset == 0) {
-            return 0;
-        }
+        //        if (offset == 0) {
+        //            return 0;
+        //        }
         if (offset == 4) {
-            return 0b01011110100000000000000000000000;
+            return 0x1c802000;
         }
+        return 0;
     }
 
     if (IRQCONTROL.contains(hw_address)) {
@@ -228,7 +231,6 @@ u32 Bus::read32(u32 address) {
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
         return timers.read(offset);
-        return 0;
     }
 
     // EXP1

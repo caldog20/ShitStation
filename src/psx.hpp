@@ -9,10 +9,10 @@
 #include "support/log.hpp"
 #include "timers/timers.hpp"
 
-class Playstation {
+class PSX {
   public:
-    Playstation();
-    ~Playstation();
+    PSX();
+    ~PSX();
 
     void reset();
     void runFrame();

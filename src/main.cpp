@@ -1,7 +1,7 @@
-#include "playstation.hpp"
+#include "psx.hpp"
 
 auto main() -> int {
-    Playstation psx;
+    PSX psx;
     psx.loadBIOS("../SCPH1001.BIN");
     //    psx.sideload("../psxtest_cpu.exe");
     psx.start();
