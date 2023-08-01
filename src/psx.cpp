@@ -28,7 +28,7 @@ void PSX::reset() {
     dma.reset();
     timers.reset();
     //    gpu.reset();
-    GPU::init();
+//    GPU::init();
     cdrom.reset();
     tempScheduleVBlank();  // schedule first vblank until gpu is implemented
 }
@@ -76,9 +76,9 @@ void PSX::update() {
         runFrame();
     }
 
-    SDL_UpdateTexture(texture, nullptr, (u8*)GPU::getVRAM().data(), 2 * 1024);
-    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-    SDL_RenderPresent(renderer);
+//    SDL_UpdateTexture(texture, nullptr, (u8*)GPU::getVRAM().data(), 2 * 1024);
+//    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+//    SDL_RenderPresent(renderer);
 
     tempScheduleVBlank();
     vblank = false;

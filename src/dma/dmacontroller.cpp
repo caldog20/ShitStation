@@ -149,7 +149,7 @@ void DMA::dmaLinkedList(Channel& channel, Port port) {
         while (size > 0) {
             address = (address + 4) & 0x1FFFFC;
             u32 value = bus.read<u32>(address);
-            GPU::write0(value);
+//            GPU::write0(value);
             size--;
         }
 
@@ -181,7 +181,7 @@ void DMA::dmaBlockCopy(Channel& channel, Port port) {
                     break;
                 }
                 case Port::GPU: {
-                    value = GPU::read0();
+//                    value = GPU::read0();
                     bus.write<u32>(addr, value);
                     break;
                 }
@@ -195,7 +195,7 @@ void DMA::dmaBlockCopy(Channel& channel, Port port) {
             value = bus.read<u32>(addr);
             switch (port) {
                 case Port::GPU: {
-                    GPU::write0(value);
+//                    GPU::write0(value);
                     break;
                 }
             }
