@@ -8,6 +8,9 @@
 namespace Cpu { class Cpu; }
 namespace DMA { class DMA; }
 namespace Timers { class Timers; }
+namespace GPU { class GPU; }
+namespace CDROM {class CDROM;}
+namespace SIO {class SIO;}
 // clang-format on
 
 namespace Bus {
@@ -38,7 +41,7 @@ enum : u32 {
 
 class Bus {
   public:
-    Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers);
+    Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers, CDROM::CDROM& cdrom, SIO::SIO& sio);
     ~Bus();
 
     void reset();
@@ -109,6 +112,9 @@ class Bus {
     Cpu::Cpu& cpu;
     DMA::DMA& dma;
     Timers::Timers& timers;
+    //    GPU::GPU& gpu;
+    CDROM::CDROM& cdrom;
+    SIO::SIO& sio;
 
     u32 CacheControl;
     u32 MemControl[9];
@@ -135,7 +141,7 @@ class Bus {
     const Range SPU = {0x1F801C00, 0x280};
     const Range CDROM = {0x1F801800, 4};
     const Range CACHECONTROL = {0xFFFE0130, 4};
-    const Range PAD = {0x1F801040, 16};
+    const Range PAD = {0x1F801040, 20};
     const Range MEMCONTROL = {0x1F801000, 36};
     const Range MEMCONTROL2 = {0x1F801060, 4};
     const Range IRQCONTROL = {0x1F801070, 8};

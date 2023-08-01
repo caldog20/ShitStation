@@ -24,4 +24,5 @@ AllowShortFunctionsOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: true
 Cpp11BracedListStyle: true
 PackConstructorInitializers: BinPack
-CompactNamespaces: true
+AlignAfterOpenBracket: BlockIndent
+#CompactNamespaces: true

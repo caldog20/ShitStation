@@ -4,6 +4,8 @@
 #include <memory>
 
 #include "bus/bus.hpp"
+#include "cdrom/cdrom.hpp"
+#include "gpu/gpu.hpp"
 #include "scheduler/scheduler.hpp"
 #include "support/log.hpp"
 
@@ -69,7 +71,7 @@ void DMA::write8(u32 offset, u8 value) {
             break;
         case 3: dicr.ip = (dicr.ip & ~value) & 0x7F; break;
     }
-    checkIRQ();
+    //    checkIRQ();
 }
 
 void DMA::write(u32 offset, u32 value) {
@@ -89,7 +91,7 @@ void DMA::write(u32 offset, u32 value) {
     auto& ch = channels[channel];
 
     switch (offset & 0xF) {
-        case 0: ch.base = value; return;
+        case 0: ch.base = value & 0xffffff; return;
         case 4:
             ch.blockSize = static_cast<u16>(value);
             ch.blockCount = static_cast<u16>(value >> 16);
@@ -137,20 +139,21 @@ void DMA::startDMA(Channel& channel, Port port) {
 }
 
 void DMA::dmaLinkedList(Channel& channel, Port port) {
-    Log::debug("[DMA] DMA linked list\n");
+    //    Log::debug("[DMA] DMA linked list\n");
     u32 address = channel.base;
     assert(port == Port::GPU);
+    u32 header = 0;
     while (true) {
-        u32 header = bus.read<u32>(address);
+        header = bus.read<u32>(address);
         u32 size = header >> 24;
         while (size > 0) {
             address = (address + 4) & 0x1FFFFC;
             u32 value = bus.read<u32>(address);
-            //            gpu.gp0(value);
+            GPU::write0(value);
             size--;
         }
 
-        if (header & (1 << 23)) {
+        if ((header & 0x800000) != 0) {
             break;
         }
         address = header & 0x1FFFFC;
@@ -159,9 +162,9 @@ void DMA::dmaLinkedList(Channel& channel, Port port) {
 }
 
 void DMA::dmaBlockCopy(Channel& channel, Port port) {
-    Log::debug("[DMA] DMA block copy\n");
+    //    Log::debug("[DMA] DMA block copy\n");
     int step = channel.step == Step::Increment ? 4 : -4;
-    u32 address = channel.base;
+    u32 address = channel.base & 0xFFFFFF;
     u32 remsize = getTransferSize(channel);
     while (remsize > 0) {
         u32 addr = address & 0x1FFFFC;
@@ -178,17 +181,21 @@ void DMA::dmaBlockCopy(Channel& channel, Port port) {
                     break;
                 }
                 case Port::GPU: {
-                    // value = gpu.read(0);
-                    // bus.write<u32>(addr, value);
+                    value = GPU::read0();
+                    bus.write<u32>(addr, value);
                     break;
                 }
                 case Port::CDROM: {
+                    value = bus.cdrom.dmaRead();
+                    bus.write<u32>(addr, value);
                     break;
                 }
             }
         } else if (channel.direction == Direction::FromRam) {
+            value = bus.read<u32>(addr);
             switch (port) {
                 case Port::GPU: {
+                    GPU::write0(value);
                     break;
                 }
             }

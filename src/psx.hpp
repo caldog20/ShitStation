@@ -1,10 +1,15 @@
 #pragma once
+#include <SDL.h>
+
 #include <filesystem>
 
 #include "bus/bus.hpp"
+#include "cdrom/cdrom.hpp"
 #include "cpu/cpu.hpp"
 #include "dma/dmacontroller.hpp"
+#include "gpu/gpu.hpp"
 #include "scheduler/scheduler.hpp"
+#include "sio/sio.hpp"
 #include "support/helpers.hpp"
 #include "support/log.hpp"
 #include "timers/timers.hpp"
@@ -38,6 +43,13 @@ class PSX {
     Scheduler::Scheduler scheduler;
     DMA::DMA dma;
     Timers::Timers timers;
+    //    GPU::GPU gpu;
+    CDROM::CDROM cdrom;
+    SIO::SIO sio;
+
+    SDL_Renderer* renderer;
+    SDL_Window* window;
+    SDL_Texture* texture;
 
     bool running = false;
     bool vblank = false;

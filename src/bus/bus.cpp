@@ -1,13 +1,17 @@
 #include "bus.hpp"
 
+#include "cdrom/cdrom.hpp"
 #include "cpu/cpu.hpp"
 #include "dma/dmacontroller.hpp"
+#include "gpu/gpu.hpp"
+#include "sio/sio.hpp"
 #include "support/log.hpp"
 #include "timers/timers.hpp"
 
 namespace Bus {
 
-Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers) : cpu(cpu), dma(dma), timers(timers) {
+Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers, CDROM::CDROM& cdrom, SIO::SIO& sio)
+    : cpu(cpu), dma(dma), timers(timers), cdrom(cdrom), sio(sio) {
     try {
         ram = new u8[MemorySize::Ram];
         bios = new u8[MemorySize::Bios];
@@ -27,6 +31,7 @@ Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers) : cpu(cpu), dma(d
         readPages[index + 0x8000] = pointer;  // KSEG0
         readPages[index + 0xA000] = pointer;  // KSEG1
     }
+
     // RAM Write Pages
     for (auto index = 0; index < 128; index++) {
         const auto pointer = (uintptr_t)&ram[index * PAGE_SIZE];
@@ -34,6 +39,7 @@ Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers) : cpu(cpu), dma(d
         writePages[index + 0x8000] = pointer;  // KSEG0
         writePages[index + 0xA000] = pointer;  // KSEG1
     }
+
     // BIOS Read Pages
     for (auto index = 0; index < 8; index++) {
         const auto pointer = (uintptr_t)&bios[index * PAGE_SIZE];
@@ -107,16 +113,23 @@ u8 Bus::read8(u32 address) {
     auto hw_address = mask(address);
 
     if (PAD.contains(hw_address)) {
+        auto offset = PAD.offset(hw_address);
+        return sio.read<u8>(offset);
+    }
+
+    if (EXP2.contains(hw_address)) {
         return 0xff;
     }
-    // PAD
-    // EXP1
-    // EXP2
-    // CDROM
-    // DMA
-    // SIO
+    if (EXP1.contains(hw_address)) {
+        return 0xff;
+    }
 
-    Log::warn("[BUS] [READ8] Unhandled read at address: {:08x}\n", address);
+    if (CDROM.contains(hw_address)) {
+        auto offset = CDROM.offset(hw_address);
+        return cdrom.read(offset);
+    }
+
+    Log::warn("[BUS] [READ8] Unhandled read at address: {:08x}\n", hw_address);
     return 0;
 }
 
@@ -148,6 +161,11 @@ u16 Bus::read16(u32 address) {
     // Slow Reads to MMIO
     auto hw_address = mask(address);
 
+    // Temp timer2 stub
+    if (hw_address == 0x1f801120) {
+        return 0x000016b0;
+    }
+
     if (IRQCONTROL.contains(hw_address)) {
         auto offset = IRQCONTROL.offset(hw_address);
         if (offset == 0) {
@@ -157,6 +175,13 @@ u16 Bus::read16(u32 address) {
         }
     }
 
+    if (CDROM.contains(hw_address)) {
+        auto offset = CDROM.offset(hw_address);
+        u8 value1 = cdrom.read(offset);
+        u8 value2 = cdrom.read(offset);
+        return (value1 << 8) | value2;
+    }
+
     if (SPU.contains(hw_address)) {
         auto offset = SPU.offset(hw_address);
         return *(u16*)(spu + offset);
@@ -164,10 +189,14 @@ u16 Bus::read16(u32 address) {
 
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
-        return timers.read(offset);
+        //        return timers.read(offset);
         return 0;
     }
 
+    if (PAD.contains(hw_address)) {
+        auto offset = PAD.offset(hw_address);
+        return sio.read<u16>(offset);
+    }
     // PAD
     // SIO
     // EXP1
@@ -205,11 +234,10 @@ u32 Bus::read32(u32 address) {
 
     if (GPU.contains(hw_address)) {
         auto offset = GPU.offset(hw_address);
-        //        if (offset == 0) {
-        //            return 0;
-        //        }
-        if (offset == 4) {
-            return 0x1c802000;
+        if (offset == 0) {
+            //            return GPU::read0();
+        } else if (offset == 4) {
+            //            return GPU::read1();
         }
         return 0;
     }
@@ -230,7 +258,12 @@ u32 Bus::read32(u32 address) {
 
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
-        return timers.read(offset);
+        return 0;
+    }
+
+    if (PAD.contains(hw_address)) {
+        auto offset = PAD.offset(hw_address);
+        return sio.read<u32>(offset);
     }
 
     // EXP1
@@ -249,11 +282,7 @@ void Bus::write8(u32 address, u8 value) {
 
     cpu.addCycles(CycleBias::RAM);
 
-    if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
-        cpu.addCycles(CycleBias::ROM);
-    }
-
-    // BIOS/RAM Fastmem Writes
+    // RAM Fastmem Writes
     if (pointer != 0) {
         *(u8*)(pointer + offset) = value;
         return;
@@ -275,10 +304,18 @@ void Bus::write8(u32 address, u8 value) {
         return dma.write8(offset, value);
     }
 
-    // PAD
+    if (CDROM.contains(hw_address)) {
+        auto offset = CDROM.offset(hw_address);
+        cdrom.write(offset, value);
+        return;
+    }
+
+    if (PAD.contains(hw_address)) {
+        auto offset = PAD.offset(hw_address);
+        return sio.write<u8>(offset, value);
+    }
+
     // EXP2
-    // CDROM
-    // DMA ???
     Log::warn("[BUS] [WRITE8] Unhandled write at address: {:08x} : value: {:08x}\n", address, value);
 }
 
@@ -291,11 +328,7 @@ void Bus::write16(u32 address, u16 value) {
 
     cpu.addCycles(CycleBias::RAM);
 
-    if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
-        cpu.addCycles(CycleBias::ROM);
-    }
-
-    // BIOS/RAM Fastmem Writes
+    // RAM Fastmem Writes
     if (pointer != 0) {
         *(u16*)(pointer + offset) = value;
         return;
@@ -334,9 +367,11 @@ void Bus::write16(u32 address, u16 value) {
         return;
     }
 
+    if (PAD.contains(hw_address)) {
+        auto offset = PAD.offset(hw_address);
+        return sio.write<u16>(offset, value);
+    }
     // SPU
-    // PAD
-    // SIO
     Log::warn("[BUS] [WRITE16] Unhandled write at address: {:08x} : value: {:08x}\n", address, value);
 }
 
@@ -349,11 +384,7 @@ void Bus::write32(u32 address, u32 value) {
 
     cpu.addCycles(CycleBias::RAM);
 
-    if (page == 0xBFC0 || page == 0x9FC0 || page == 0x1FC0) {
-        cpu.addCycles(CycleBias::ROM);
-    }
-
-    // BIOS/RAM Fastmem Writes
+    // RAM Fastmem Writes
     if (pointer != 0) {
         *(u32*)(pointer + offset) = value;
         return;
@@ -369,10 +400,6 @@ void Bus::write32(u32 address, u32 value) {
 
     // Slow writes to MMIO
     auto hw_address = mask(address);
-
-    if (GPU.contains(hw_address)) {
-        return;
-    }
 
     if (IRQCONTROL.contains(hw_address)) {
         auto offset = IRQCONTROL.offset(hw_address);
@@ -408,6 +435,21 @@ void Bus::write32(u32 address, u32 value) {
     if (TIMERS.contains(hw_address)) {
         auto offset = TIMERS.offset(hw_address);
         timers.write(offset, value);
+        return;
+    }
+
+    if (PAD.contains(hw_address)) {
+        auto offset = PAD.offset(hw_address);
+        return sio.write<u32>(offset, value);
+    }
+
+    if (GPU.contains(hw_address)) {
+        auto offset = GPU.offset(hw_address);
+        if (offset == 0) {
+            //            GPU::write0(value);
+        } else if (offset == 4) {
+            //            GPU::write1(value);
+        }
         return;
     }
 

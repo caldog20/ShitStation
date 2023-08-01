@@ -2,7 +2,21 @@
 
 #include <fstream>
 
-PSX::PSX() : bus(cpu, dma, timers), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler) { reset(); }
+PSX::PSX()
+    : bus(cpu, dma, timers, cdrom, sio), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler), cdrom(scheduler), sio(scheduler) {
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_SetHint(SDL_HINT_RENDER_VSYNC, "0");
+
+    SDL_CreateWindowAndRenderer(1024, 512, 0, &window, &renderer);
+    SDL_SetWindowSize(window, 1024, 512);
+    SDL_RenderSetLogicalSize(renderer, 1024, 512);
+    SDL_SetWindowResizable(window, SDL_FALSE);
+    SDL_SetWindowTitle(window, "Emulator");
+
+    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_XBGR1555, SDL_TEXTUREACCESS_STREAMING, 1024, 512);
+
+    reset();
+}
 
 PSX::~PSX() {}
 
@@ -13,7 +27,9 @@ void PSX::reset() {
     scheduler.reset();
     dma.reset();
     timers.reset();
-
+    //    gpu.reset();
+    GPU::init();
+    cdrom.reset();
     tempScheduleVBlank();  // schedule first vblank until gpu is implemented
 }
 
@@ -53,9 +69,16 @@ void PSX::tempScheduleVBlank() {
 }
 
 void PSX::update() {
+    SDL_Event e;
+    SDL_PollEvent(&e);
+
     if (running) {
         runFrame();
     }
+
+    SDL_UpdateTexture(texture, nullptr, (u8*)GPU::getVRAM().data(), 2 * 1024);
+    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+    SDL_RenderPresent(renderer);
 
     tempScheduleVBlank();
     vblank = false;

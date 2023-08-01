@@ -86,12 +86,23 @@ struct Cop0Regs {
     u32 epc;
 };
 
+// TODO: Fix writeback
 struct Regs {
     std::array<u32, 34> gpr;
     Cop0Regs cop0;
+    u32 writebackReg = 0;
+    u32 writebackValue = 0;
 
     inline u32 get(size_t index) { return gpr[index]; }
-    inline void set(size_t index, u32 value) { gpr[index] = value; }
+    inline void set(size_t index, u32 value) {
+        writebackReg = index;
+        writebackValue = value;
+    }
+
+    inline void resetwb() {
+        writebackReg = 0;
+        writebackValue = 0;
+    }
 };
 
 class Cpu {
@@ -106,6 +117,7 @@ class Cpu {
     void run();
 
     [[nodiscard]] auto getPC() const -> u32 { return PC; }
+
     void setPC(u32 pc) {
         PC = pc;
         nextPC = pc + 4;

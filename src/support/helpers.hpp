@@ -16,6 +16,11 @@ using s16 = std::int16_t;
 using s32 = std::int32_t;
 using s64 = std::int64_t;
 
+using i8 = std::int8_t;
+using i16 = std::int16_t;
+using i32 = std::int32_t;
+using i64 = std::int64_t;
+
 using Cycles = u64;
 
 constexpr size_t operator""_KB(unsigned long long int x) { return 1024ULL * x; }
@@ -37,8 +42,8 @@ constexpr ReturnType signExtend(V value) {
 
 template <typename ReturnType, typename V>
 constexpr ReturnType zeroExtend(V value) {
-    return static_cast<ReturnType>(
-        static_cast<typename std::make_unsigned<ReturnType>::type>(static_cast<typename std::make_unsigned<V>::type>(value)));
+    return static_cast<ReturnType>(static_cast<typename std::make_unsigned<ReturnType>::type>(static_cast<typename std::make_unsigned<V>::type>(value)
+    ));
 }
 
 static inline constexpr u32 signExtend32(u32 value, u32 startingSize) {

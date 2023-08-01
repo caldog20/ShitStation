@@ -45,7 +45,6 @@ class Scheduler {
 
     auto nextEventCycles() { return events.top().cycleTarget(); }
 
-  private:
     Bus::Bus& bus;
     Cpu::Cpu& cpu;
     Cycles& cycles;

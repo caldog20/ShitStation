@@ -39,6 +39,9 @@ void Cpu::run() {}
 
 void Cpu::step() {
     // Fetch
+    if (PC == SHELL_PC) {
+        bus.shellReached();
+    }
     instruction = bus.fetch(PC);
     //    Log::info("Count: {} PC: {:#08x}\n", count, PC);
     if ((PC % 4) != 0) {
@@ -69,9 +72,10 @@ void Cpu::step() {
     memoryLoad = delayedLoad;
     delayedLoad.reset();
 
+    // TODO: Fix writeback
     // Write back registers
-    regs.gpr[writeBack.reg] = writeBack.value;
-    writeBack.reset();
+    regs.gpr[regs.writebackReg] = regs.writebackValue;
+    regs.resetwb();
 
     handleKernelCalls();
     checkInterrupts();
@@ -143,16 +147,15 @@ void Cpu::ExceptionHandler(Exception cause, u32 cop) {
     if (delaySlot) {
         regs.cop0.epc -= 4;
         regs.cop0.cause |= (1 << 31);
+        if (branchTakenDelaySlot) {
+            regs.cop0.cause |= (1 << 30);
+        }
     } else {
         regs.cop0.cause &= ~(1 << 31);
     }
 
-    if (branchTakenDelaySlot) {
-        regs.cop0.cause |= (1 << 30);
-    }
-
     setPC(vector);
-    Log::debug("ExceptionHandler at PC {:#08x}\n", currentPC);
+    //    Log::debug("ExceptionHandler at PC {:#08x}\n", currentPC);
 }
 
 void Cpu::RFE() {
@@ -163,7 +166,7 @@ void Cpu::RFE() {
     u32 mode = regs.cop0.status & 0x3F;
     regs.cop0.status &= ~(u32)0xF;
     regs.cop0.status |= mode >> 2;
-    Log::debug("Return from Exception\n");
+    //    Log::debug("Return from Exception\n");
 }
 
 void Cpu::SYSCALL() { ExceptionHandler(Exception::Syscall); }
@@ -214,8 +217,10 @@ void Cpu::JAL() {
 }
 
 void Cpu::JALR() {
-    regs.set(instruction.rd, nextPC);
-    JR();
+    delayedLoad.set(instruction.rd, nextPC);
+    nextPC = regs.get(instruction.rs);
+    branch = true;
+    branchTaken = true;
 }
 
 void Cpu::JR() {
@@ -263,9 +268,9 @@ void Cpu::BLEZ() {
 // ALU Instructions
 
 void Cpu::ADD() {
-    s32 rs = regs.get(instruction.rs);
-    s32 rt = regs.get(instruction.rt);
-    u32 value = rs + rt;
+    s32 rs = static_cast<s32>(regs.get(instruction.rs));
+    s32 rt = static_cast<s32>(regs.get(instruction.rt));
+    u32 value = static_cast<u32>(rs + rt);
 
     bool overflow = ((rs ^ value) & (rt ^ value)) >> 31;
     if (overflow) {
@@ -279,9 +284,9 @@ void Cpu::ADD() {
 }
 
 void Cpu::ADDI() {
-    s32 rs = regs.get(instruction.rs);
+    s32 rs = static_cast<s32>(regs.get(instruction.rs));
     s32 imm = instruction.immse;
-    u32 value = rs + imm;
+    u32 value = static_cast<u32>(rs + imm);
 
     bool overflow = ((rs ^ value) & (imm ^ value)) >> 31;
     if (overflow) {
@@ -430,8 +435,8 @@ void Cpu::SRLV() {
 
 void Cpu::SUB() {
     if (!instruction.rd) return;
-    s32 rs = regs.get(instruction.rs);
-    s32 rt = regs.get(instruction.rt);
+    s32 rs = static_cast<s32>(regs.get(instruction.rs));
+    s32 rt = static_cast<s32>(regs.get(instruction.rt));
 
     s32 value = rs - rt;
 
@@ -613,9 +618,7 @@ void Cpu::LHU() {
 }
 
 void Cpu::LW() {
-    u32 rs = regs.get(instruction.rs);
-    const auto imm = (s32)(s16)instruction.immse;
-    const auto address = rs + imm;
+    u32 address = regs.get(instruction.rs) + instruction.immse;
 
     if (address % 4 != 0) {
         regs.cop0.bva = address;
