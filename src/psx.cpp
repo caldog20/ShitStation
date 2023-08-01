@@ -79,6 +79,7 @@ PSX::PSX()
     screenVAO.enableAttribute<0>();
     screenVAO.setAttribute<1>(2, GL_FLOAT, GL_FALSE, sizeof(ScreenVertex), reinterpret_cast<void*>(offsetof(ScreenVertex, uv)));
 
+    gpu.init(); // Init GPU after OpenGL is initialized
     reset();
 }
 
@@ -96,8 +97,7 @@ void PSX::reset() {
     scheduler.reset();
     dma.reset();
     timers.reset();
-    //    gpu.reset();
-    //    GPU::init();
+    gpu.reset();
     cdrom.reset();
     tempScheduleVBlank();  // schedule first vblank until gpu is implemented
 }
