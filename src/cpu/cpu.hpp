@@ -90,18 +90,23 @@ struct Cop0Regs {
 struct Regs {
     std::array<u32, 34> gpr;
     Cop0Regs cop0;
+
     u32 writebackReg = 0;
     u32 writebackValue = 0;
 
     inline u32 get(size_t index) { return gpr[index]; }
+
     inline void set(size_t index, u32 value) {
         writebackReg = index;
         writebackValue = value;
+        gpr[0] = 0;
     }
 
-    inline void resetwb() {
+    inline void writeback() {
+        gpr[writebackReg] = writebackValue;
         writebackReg = 0;
         writebackValue = 0;
+        gpr[0] = 0;
     }
 };
 

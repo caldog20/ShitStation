@@ -69,13 +69,12 @@ void Cpu::step() {
     if (delayedLoad.reg != memoryLoad.reg) {
         regs.gpr[memoryLoad.reg] = memoryLoad.value;
     }
+
     memoryLoad = delayedLoad;
     delayedLoad.reset();
 
-    // TODO: Fix writeback
     // Write back registers
-    regs.gpr[regs.writebackReg] = regs.writebackValue;
-    regs.resetwb();
+    regs.writeback();
 
     handleKernelCalls();
     checkInterrupts();
