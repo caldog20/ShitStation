@@ -41,7 +41,7 @@ enum : u32 {
 
 class Bus {
   public:
-    Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers, CDROM::CDROM& cdrom, SIO::SIO& sio);
+    Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers, CDROM::CDROM& cdrom, SIO::SIO& sio, GPU::GPU& gpu);
     ~Bus();
 
     void reset();
@@ -112,7 +112,7 @@ class Bus {
     Cpu::Cpu& cpu;
     DMA::DMA& dma;
     Timers::Timers& timers;
-    //    GPU::GPU& gpu;
+    GPU::GPU& gpu;
     CDROM::CDROM& cdrom;
     SIO::SIO& sio;
 

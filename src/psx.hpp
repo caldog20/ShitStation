@@ -8,10 +8,12 @@
 #include "cpu/cpu.hpp"
 #include "dma/dmacontroller.hpp"
 #include "gpu/gpu.hpp"
+#include "gpu/gpugl.hpp"
 #include "scheduler/scheduler.hpp"
 #include "sio/sio.hpp"
 #include "support/helpers.hpp"
 #include "support/log.hpp"
+#include "support/opengl.hpp"
 #include "timers/timers.hpp"
 
 class PSX {
@@ -26,6 +28,8 @@ class PSX {
     void stop();
 
     void update();
+
+    [[nodiscard]] bool isOpen() const { return open; }
 
     void loadBIOS(const std::filesystem::path& path);
     void loadDisc(const std::filesystem::path& path);
@@ -43,17 +47,29 @@ class PSX {
     Scheduler::Scheduler scheduler;
     DMA::DMA dma;
     Timers::Timers timers;
-    //    GPU::GPU gpu;
+    GPU::GPU_GL gpu;
+
     CDROM::CDROM cdrom;
     SIO::SIO sio;
 
     SDL_Renderer* renderer;
     SDL_Window* window;
     SDL_Texture* texture;
+    SDL_GLContext glContext;
+    SDL_Event event;
 
     bool running = false;
     bool vblank = false;
     bool biosLoaded = false;
-
+    bool open = true;
     void tempScheduleVBlank();
+    u64 frameCounter = 0;
+    OpenGL::Shader screenShader;
+    OpenGL::VertexArray screenVAO;
+    OpenGL::VertexBuffer<OpenGL::ArrayBuffer> screenVBO;
+
+    struct ScreenVertex {
+        OpenGL::vec2 pos;
+        OpenGL::vec2 uv;
+    };
 };

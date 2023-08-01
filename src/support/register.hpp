@@ -48,8 +48,8 @@ class Register {
     Register& operator=(const Register&) = default;
     Register& operator=(Register&&) = default;
 
-    virtual T get() { return value; }
-    virtual void set(T value) { this->value = value; }
+    T get() { return value; }
+    void set(T value) { this->value = value; }
 
     operator T() { return get(); }
 

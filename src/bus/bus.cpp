@@ -10,8 +10,8 @@
 
 namespace Bus {
 
-Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers, CDROM::CDROM& cdrom, SIO::SIO& sio)
-    : cpu(cpu), dma(dma), timers(timers), cdrom(cdrom), sio(sio) {
+Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers, CDROM::CDROM& cdrom, SIO::SIO& sio, GPU::GPU& gpu)
+    : cpu(cpu), dma(dma), timers(timers), gpu(gpu), cdrom(cdrom), sio(sio) {
     try {
         ram = new u8[MemorySize::Ram];
         bios = new u8[MemorySize::Bios];
@@ -235,9 +235,9 @@ u32 Bus::read32(u32 address) {
     if (GPU.contains(hw_address)) {
         auto offset = GPU.offset(hw_address);
         if (offset == 0) {
-            //            return GPU::read0();
+            return gpu.read0();
         } else if (offset == 4) {
-            //            return GPU::read1();
+            return gpu.read1();
         }
         return 0;
     }
@@ -446,9 +446,9 @@ void Bus::write32(u32 address, u32 value) {
     if (GPU.contains(hw_address)) {
         auto offset = GPU.offset(hw_address);
         if (offset == 0) {
-            //            GPU::write0(value);
+            gpu.write0(value);
         } else if (offset == 4) {
-            //            GPU::write1(value);
+            gpu.write1(value);
         }
         return;
     }

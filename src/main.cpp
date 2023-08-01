@@ -3,10 +3,10 @@
 auto main() -> int {
     PSX psx;
     psx.loadBIOS("../SCPH1001.BIN");
-    //    psx.sideload("../pong.ps-exe");
+    //    psx.sideload("../padtest.exe");
     psx.start();
 
-    while (true) {
+    while (psx.isOpen()) {
         psx.update();
     }
 
