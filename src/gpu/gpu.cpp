@@ -31,7 +31,6 @@ void GPU::reset() {
     transferIndex = 0;
     readMode = Command;
     writeMode = Command;
-    rectTexpage = 0;
     vram.resize(VRAM_SIZE);
     transferReadBuffer.resize(VRAM_SIZE);
     transferWriteBuffer.resize(VRAM_SIZE);
@@ -159,7 +158,7 @@ void GPU::writeInternal(u32 value) {
 }
 
 void GPU::updateGPUStat() {
-    gpustat |= (drawMode & 0x7FF);
+    gpustat |= drawMode & 0x7FF;
     gpustat |= static_cast<u32>(Helpers::isBitSet(drawMode, 11) << 15);
     gpustat |= static_cast<u32>(setMaskBit << 11);
     gpustat |= static_cast<u32>(preserveMaskedPixels << 12);
@@ -221,7 +220,7 @@ void GPU::setDrawAreaBottomRight(u32 value) {
 }
 
 void GPU::setDrawMode(u32 value) {
-    drawMode = static_cast<u16>(args[0]);
+    drawMode = static_cast<u16>(value);
     texPageX = value & 0xF;
     texPageY = (value >> 4) & 0x1;
     semiTrans = (value >> 5) & 3;
@@ -232,6 +231,7 @@ void GPU::setDrawMode(u32 value) {
     textureDisable = Helpers::isBitSet(value, 11);
     rectTextureFlipX = Helpers::isBitSet(value, 12);
     rectTextureFlipY = Helpers::isBitSet(value, 13);
+    rectTexpage = value & 0x3fff;
 }
 
 void GPU::setMaskBitSetting(u32 value) {

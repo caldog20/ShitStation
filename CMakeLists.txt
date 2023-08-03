@@ -81,7 +81,7 @@ add_executable(${PROJECT_NAME}
         src/cdrom/cdrom_util.hpp
         src/support/fifo.hpp
         src/sio/sio.cpp
-        src/sio/sio.hpp src/gpu/gpugl.cpp src/gpu/gpugl.hpp src/support/opengl.hpp)
+        src/sio/sio.hpp src/gpu/gpugl.cpp src/gpu/gpugl.hpp src/support/opengl.hpp src/gpu/softgpu.cpp src/gpu/softgpu.hpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static glad fmt::fmt magic_enum::magic_enum BitField)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)

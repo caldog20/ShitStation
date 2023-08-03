@@ -3,11 +3,8 @@
 
 namespace GPU {
 
-class GPU_GL final : public GPU {
+class SoftGPU : public GPU {
   public:
-    GPU_GL();
-    ~GPU_GL();
-
     void reset() override;
     void init();
 
