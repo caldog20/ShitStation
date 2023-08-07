@@ -17,3 +17,4 @@ class SoftGPU : public GPU {
 };
 
 }  // namespace GPU
+

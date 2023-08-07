@@ -5,7 +5,7 @@
 namespace GPU {
 
 static const char* vertShader = R"(
-    #version 410
+    #version 410 core
     layout (location = 0) in ivec2 inPos;
     layout (location = 1) in int inColor;
 
@@ -33,7 +33,7 @@ static const char* vertShader = R"(
 )";
 
 static const char* fragShader = R"(
-    #version 410
+    #version 410 core
     in vec4 outColor;
     layout(location = 0, index = 0) out vec4 fragColor;
     //uniform sampler2D u_vramTex;
