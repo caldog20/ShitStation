@@ -60,7 +60,7 @@ PSX::PSX()
 
     // clang-format on
 
-    screenShader.loadShadersFromString(vertexSource, fragSource);
+    screenShader.build(vertexSource, fragSource);
 
     std::vector<ScreenVertex> vertices = {
         {OpenGL::vec2({-1.0f, -1.0f}), OpenGL::vec2({0, 0})},  // top left
@@ -69,18 +69,25 @@ PSX::PSX()
         {OpenGL::vec2({1.0f, 1.0f}), OpenGL::vec2({1, 1})}     // top right
     };
 
-    screenVAO.gen();
+    screenVAO.create();
     screenVAO.bind();
 
-    screenVBO.gen();
+    screenVBO.create(OpenGL::ArrayBuffer);
     screenVBO.bind();
-    screenVBO.bufferData<ScreenVertex, OpenGL::StaticDraw>(vertices.data(), vertices.size());
-    screenVAO.setAttribute<0>(2, GL_FLOAT, GL_FALSE, sizeof(ScreenVertex), reinterpret_cast<void*>(offsetof(ScreenVertex, pos)));
-    screenVAO.enableAttribute<0>();
-    screenVAO.setAttribute<1>(2, GL_FLOAT, GL_FALSE, sizeof(ScreenVertex), reinterpret_cast<void*>(offsetof(ScreenVertex, uv)));
+    screenVBO.data(vertices.data(), vertices.size(), OpenGL::StaticDraw);
+    screenVAO.setAttributeFloat<float>(0, 2, sizeof(ScreenVertex), reinterpret_cast<void*>(offsetof(ScreenVertex, pos)));
+    screenVAO.enableAttribute(0);
+    screenVAO.setAttributeFloat<float>(1, 2, sizeof(ScreenVertex), reinterpret_cast<void*>(offsetof(ScreenVertex, uv)));
+    screenVAO.enableAttribute(1);
+    OpenGL::bindDefaultTexture();
+    OpenGL::bindDefaultFramebuffer();
 
-    gpu.init(); // Init GPU after OpenGL is initialized
+    gpu.init();  // Init GPU after OpenGL is initialized
     reset();
+
+    screenShader.use();
+    uniformTextureLocation = screenShader.getUniformLocation("screenTexture");
+    glUseProgram(0);
 }
 
 PSX::~PSX() {
@@ -148,18 +155,27 @@ void PSX::update() {
     }
 
     if (running) {
+        gpu.setupDrawEnvironment();
         runFrame();
     }
 
     tempScheduleVBlank();
     vblank = false;
+    gpu.render();  // Dump any remaining verts
+    gpu.vblank();
 
+    OpenGL::setViewport(width, height);
     screenVAO.bind();
     screenVBO.bind();
-    screenShader.activate();
-    OpenGL::setclearColor();
+    gpu.getTexture().bind();
+
+    screenShader.use();
+    glUniform1i(uniformTextureLocation, 0);
+
+    OpenGL::setClearColor();
     OpenGL::clearColor();
-    OpenGL::drawArrays<OpenGL::TriangleStrip>(0, 4);
+
+    OpenGL::drawArrays(OpenGL::TriangleStrip, 0, 4);
 
     SDL_GL_SwapWindow(window);
 

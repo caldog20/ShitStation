@@ -9,10 +9,11 @@ class SoftGPU : public GPU {
     void init();
 
     void drawCommand() override;
-
+    void internalCommand(u32 value) override;
     void transferToVram() override;
     void transferToCpu() override;
     void TransferVramToVram() override;
+
 };
 
 }  // namespace GPU

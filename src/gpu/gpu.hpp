@@ -11,7 +11,6 @@ namespace GPU {
 
 template <class T>
 concept Scalar = std::is_scalar<T>::value;
-
 template <Scalar T>
 struct Rect {
     T x;
@@ -68,22 +67,22 @@ class GPU {
     enum VRes : u32 { V240 = 0, V480 = 1 };
     enum VideoMode : u32 { NTSC = 0, PAL = 1 };
 
-    void blankDraw();
     void updateGPUStat();
 
     virtual void drawCommand() = 0;
     virtual void transferToVram() = 0;
     virtual void transferToCpu() = 0;
     virtual void TransferVramToVram() = 0;
+    virtual void internalCommand(u32 value) = 0;
 
-    void writeInternal(u32 value);
+    virtual void setDrawMode(u32 value) = 0;
+    virtual void setTextureWindow(u32 value) = 0;
+    virtual void setDrawOffset(u32 value) = 0;
+    virtual void setDrawAreaTopLeft(u32 value) = 0;
+    virtual void setDrawAreaBottomRight(u32 value) = 0;
+    virtual void setMaskBitSetting(u32 value) = 0;
 
-    void setTextureWindow(u32 value);
-    void setDrawOffset(u32 value);
-    void setDrawAreaTopLeft(u32 value);
-    void setDrawAreaBottomRight(u32 value);
-    void setDrawMode(u32 value);
-    void setMaskBitSetting(u32 value);
+    // GP1 Internal Commands
     void resetFifo();
     void ackIRQ();
     void setDisplayEnable(u32 value);

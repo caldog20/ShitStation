@@ -57,7 +57,10 @@ void GPU::reset() {
     displayDepth = static_cast<DisplayDepth>(0);
 }
 
-u32 GPU::read1() { return gpustat; }
+u32 GPU::read1() {
+    // return gpustat
+    return 0b01011110100000000000000000000000;
+}
 
 u32 GPU::read0() {
     if (readMode == Transfer) {
@@ -80,7 +83,8 @@ void GPU::write0(u32 value) {
             command = value >> 24;
             argsNeeded = params[command];
             if (argsNeeded == 0) {
-                writeInternal(value);
+                internalCommand(value);
+                commandPending = false;
                 return;
             }
             commandPending = true;
@@ -95,7 +99,7 @@ void GPU::write0(u32 value) {
         commandPending = false;
     } else if (writeMode == Transfer) {
         transferWriteBuffer.push_back(value);
-        if (--transferSize == 0) {
+        if (transferSize-- == 0) {
             transferToVram();
             writeMode = Command;
         }
@@ -134,29 +138,6 @@ void GPU::write1(u32 value) {
     updateGPUStat();
 }
 
-void GPU::writeInternal(u32 value) {
-    switch (command) {
-        // NOP
-        case 0x00: break;
-        // Clear texture Cache
-        case 0x01: break;
-        // Draw Mode
-        case 0xE1: setDrawMode(value); break;
-        // Texture Window
-        case 0xE2: setTextureWindow(value); break;
-        // Draw Area Top/Left
-        case 0xE3: setDrawAreaTopLeft(value); break;
-        // Draw Area Bottom/Right
-        case 0xE4: setDrawAreaBottomRight(value); break;
-        // Draw Offset
-        case 0xE5: setDrawOffset(value); break;
-        // Mask Bit Setting
-        case 0xE6: setMaskBitSetting(value); break;
-        default: Log::warn("[GPU] GP0 Internal - Unhandled command: {:#02X}", command);
-    }
-    updateGPUStat();
-}
-
 void GPU::updateGPUStat() {
     gpustat |= drawMode & 0x7FF;
     gpustat |= static_cast<u32>(Helpers::isBitSet(drawMode, 11) << 15);
@@ -189,54 +170,6 @@ void GPU::updateGPUStat() {
     gpustat |= static_cast<u32>(1 << 31);
 
     gpustat |= dmaRequest << 25;
-}
-
-void GPU::blankDraw() {}
-
-void GPU::setTextureWindow(u32 value) {
-    // 8 pixel steps - multiply by 8
-    texWindow.xMask = value & 0x1F;
-    texWindow.yMask = (value >> 5) & 0x1F;
-    texWindow.x = (value >> 10) & 0x1F;
-    texWindow.y = (value >> 15) & 0x1F;
-}
-
-void GPU::setDrawOffset(u32 value) {
-    u16 x = value & 0x7FF;
-    u16 y = (value >> 11) & 0x7FF;
-
-    drawOffset.x() = static_cast<s16>(x << 5) >> 5;
-    drawOffset.y() = static_cast<s16>(y << 5) >> 5;
-}
-
-void GPU::setDrawAreaTopLeft(u32 value) {
-    drawArea.top = (value >> 10) & 0x3FF;
-    drawArea.left = value & 0x3FF;
-}
-
-void GPU::setDrawAreaBottomRight(u32 value) {
-    drawArea.bottom = (value >> 10) & 0x3FF;
-    drawArea.right = value & 0x3FF;
-}
-
-void GPU::setDrawMode(u32 value) {
-    drawMode = static_cast<u16>(value);
-    texPageX = value & 0xF;
-    texPageY = (value >> 4) & 0x1;
-    semiTrans = (value >> 5) & 3;
-
-    textureDepth = static_cast<TextureDepth>((value >> 7) & 3);
-    dither = Helpers::isBitSet(value, 9);
-    drawToDisplay = Helpers::isBitSet(value, 10);
-    textureDisable = Helpers::isBitSet(value, 11);
-    rectTextureFlipX = Helpers::isBitSet(value, 12);
-    rectTextureFlipY = Helpers::isBitSet(value, 13);
-    rectTexpage = value & 0x3fff;
-}
-
-void GPU::setMaskBitSetting(u32 value) {
-    setMaskBit = Helpers::isBitSet(value, 0);
-    preserveMaskedPixels = Helpers::isBitSet(value, 1);
 }
 
 void GPU::resetFifo() {

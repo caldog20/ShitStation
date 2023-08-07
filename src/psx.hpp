@@ -9,6 +9,7 @@
 #include "dma/dmacontroller.hpp"
 #include "gpu/gpu.hpp"
 #include "gpu/gpugl.hpp"
+#include "gpu/softgpu.hpp"
 #include "scheduler/scheduler.hpp"
 #include "sio/sio.hpp"
 #include "support/helpers.hpp"
@@ -64,9 +65,10 @@ class PSX {
     bool open = true;
     void tempScheduleVBlank();
     u64 frameCounter = 0;
-    OpenGL::Shader screenShader;
+    OpenGL::ShaderProgram screenShader;
     OpenGL::VertexArray screenVAO;
-    OpenGL::VertexBuffer<OpenGL::ArrayBuffer> screenVBO;
+    OpenGL::VertexBuffer screenVBO;
+    GLint uniformTextureLocation = 0;
 
     struct ScreenVertex {
         OpenGL::vec2 pos;
