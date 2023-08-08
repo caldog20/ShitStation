@@ -8,8 +8,17 @@ static const char* vertShader = R"(
     #version 410 core
     layout (location = 0) in ivec2 inPos;
     layout (location = 1) in int inColor;
+    layout (location = 2) in int inTexpage;
+    layout (location = 3) in int inClut;
+    layout (location = 4) in int inTexcoords;
+
 
     out vec4 outColor;
+    flat out ivec2 texpageBase;
+    flat out ivec2 clutBase;
+    flat out int outTexcoords;
+    flat out int texMode;
+
     uniform vec2 u_drawOffsets = vec2(0.5f, -0.5f);
 
     void main() {
@@ -26,6 +35,15 @@ static const char* vertShader = R"(
         int g = (inColor >> 8) & 0xFF;
         int b = (inColor >> 16) & 0xFF;
 
+        if ((inTexpage & 0x8000) != 0) {
+            texMode = 4;
+        } else {
+            texMode = (inTexpage >> 7) & 3;
+            outTexcoords = inTexcoords;
+            texpageBase = ivec2((inTexpage & 0xf) * 64, ((inTexpage >> 4) & 0x1) * 256);
+            clutBase = ivec2((inClut & 0x3f) * 16, inClut >> 6);
+        }
+
         gl_Position = vec4(xx, yy, 0.0f, 1.0f);
         outColor = vec4(float(r) / 255.0f, float(g) / 255.0f, float(b) / 255.0f, 1.0f);
     }
@@ -35,11 +53,21 @@ static const char* vertShader = R"(
 static const char* fragShader = R"(
     #version 410 core
     in vec4 outColor;
+    flat in ivec2 texpageBase;
+    flat in ivec2 clutBase;
+    flat in int outTexcoords;
+    flat in int texMode;
+
     layout(location = 0, index = 0) out vec4 fragColor;
-    //uniform sampler2D u_vramTex;
+    uniform sampler2D u_sampleTex;
 
     void main() {
-        fragColor = outColor;
+        if (texMode == 4) {
+            fragColor = outColor;
+            return;
+        }
+
+
     }
 )";
 
@@ -69,7 +97,7 @@ void GPU_GL::init() {
 
     OpenGL::checkFramebufferStatus();
 
-    OpenGL::setClearColor(0.0f, 1.0f, 0.0f, 1.0f);
+    OpenGL::setClearColor();
     OpenGL::clearColor();
 
     blankFBO.create();
@@ -91,8 +119,18 @@ void GPU_GL::init() {
 
     vao.setAttributeInt<int>(0, 2, sizeof(Vertex), offsetof(Vertex, position));
     vao.enableAttribute(0);
+
     vao.setAttributeInt<int>(1, 1, sizeof(Vertex), offsetof(Vertex, color));
     vao.enableAttribute(1);
+
+    vao.setAttributeInt<int>(2, 1, sizeof(Vertex), offsetof(Vertex, texpage));
+    vao.enableAttribute(2);
+
+    vao.setAttributeInt<int>(3, 1, sizeof(Vertex), offsetof(Vertex, clut));
+    vao.enableAttribute(3);
+
+    vao.setAttributeInt<int>(4, 1, sizeof(Vertex), offsetof(Vertex, texcoords));
+    vao.enableAttribute(4);
 
     //    shaders.use();
     //    uniformTextureLocation = shaders.getUniformLocation("u_vramTex");
@@ -109,7 +147,6 @@ OpenGL::Texture& GPU_GL::getTexture() {
 }
 
 void GPU_GL::setupDrawEnvironment() {
-    OpenGL::setScissor(VRAM_WIDTH, VRAM_HEIGHT);
     OpenGL::enableScissor();
     vramFBO.bind();
     vao.bind();
@@ -120,6 +157,9 @@ void GPU_GL::setupDrawEnvironment() {
 }
 
 void GPU_GL::render() {
+    if (syncSampleTex) {
+        syncSampleTexture();
+    }
     if (vertCount == 0) return;
 
     vbo.subData(verts.data(), vertCount);
@@ -164,6 +204,23 @@ void GPU_GL::internalCommand(u32 value) {
 void GPU_GL::drawCommand() {
     switch (command) {
         case 0x02: fillRect(); break;
+        case 0xA0: {
+            u16 x = args[1] & 0x3ff;
+            u16 y = (args[1] >> 16) & 0x1ff;
+
+            u16 w = args[2] & 0xffff;
+            u16 h = args[2] >> 16;
+
+            w = ((w - 1) & 0x3ff) + 1;
+            h = ((h - 1) & 0x1ff) + 1;
+
+            u32 size = ((w * h) + 1) & ~1;
+            transferSize = size / 2;
+
+            writeMode = Transfer;
+            transferRect = {x, y, w, h};
+            break;
+        }
         case 0x20:
             drawPolygon<Polygon::Triangle, Shading::Flat, Transparency::Opaque>();
             break;
@@ -224,6 +281,20 @@ void GPU_GL::drawPolygon() {
             addVertex(args[7], args[6]);
         }
     }
+
+    if constexpr (shading == TexBlendFlat || shading == RawTex) {
+        u32 color = shading == TexBlendFlat ? args[0] : 0x808080;
+        u16 texpage = (args[4] >> 16) & 0x3FFF;
+        u16 clut = args[2] >> 16;
+        addVertex(args[1], color, texpage, clut, args[2] & 0xffff);
+        addVertex(args[3], color, texpage, clut, args[4] & 0xffff);
+        addVertex(args[5], color, texpage, clut, args[6] & 0xffff);
+        if constexpr (polygon == Quad) {
+            addVertex(args[3], color, texpage, clut, args[4] & 0xffff);
+            addVertex(args[5], color, texpage, clut, args[6] & 0xffff);
+            addVertex(args[7], color, texpage, clut, args[8] & 0xffff);
+        }
+    }
 }
 
 template <GPU::Rectsize size, GPU::Transparency transparency, GPU::Shading shading>
@@ -256,6 +327,8 @@ void GPU_GL::setDrawOffset(u32 value) {
 
     drawOffset.x() = static_cast<s16>(x << 5) >> 5;
     drawOffset.y() = static_cast<s16>(y << 5) >> 5;
+    const auto location = shaders.getUniformLocation("u_drawOffsets");
+    glUniform2f(location, static_cast<float>(drawOffset.x()) + 0.5f, static_cast<float>(drawOffset.y()) - 0.5f);
 }
 
 void GPU_GL::setDrawAreaTopLeft(u32 value) {
@@ -309,10 +382,26 @@ void GPU_GL::fillRect() {
     updateScissorBox();
 }
 
-void GPU_GL::transferToVram() {}
+void GPU_GL::transferToVram() {
+    render();                          // Render out remaining verts
+    OpenGL::bindDefaultFramebuffer();  // Unbind not to overwrite vram framebuffer
+    vramTex.bind();                    // Texture to copy into
+    glTexSubImage2D(
+        GL_TEXTURE_2D, 0, transferRect.x, transferRect.y, transferRect.w, transferRect.h, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV,
+        transferWriteBuffer.data()
+    );
+    syncSampleTex = true;
+    setupDrawEnvironment();
+    transferWriteBuffer.clear();
+}
 
 void GPU_GL::transferToCpu() {}
 
 void GPU_GL::TransferVramToVram() {}
+
+void GPU_GL::syncSampleTexture() {
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, VRAM_WIDTH, VRAM_HEIGHT);
+    syncSampleTex = false;
+}
 
 }  // namespace GPU

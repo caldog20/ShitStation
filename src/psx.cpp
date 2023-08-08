@@ -63,10 +63,10 @@ PSX::PSX()
     screenShader.build(vertexSource, fragSource);
 
     std::vector<ScreenVertex> vertices = {
-        {OpenGL::vec2({-1.0f, -1.0f}), OpenGL::vec2({0, 0})},  // top left
-        {OpenGL::vec2({1.0f, -1.0f}), OpenGL::vec2({1, 0})},   // bottom left
-        {OpenGL::vec2({-1.0f, 1.0f}), OpenGL::vec2({0, 1})},   // bottom right
-        {OpenGL::vec2({1.0f, 1.0f}), OpenGL::vec2({1, 1})}     // top right
+        {OpenGL::vec2({-1.0f, -1.0f}), OpenGL::vec2({0, 1})},  // bottom left
+        {OpenGL::vec2({1.0f, -1.0f}), OpenGL::vec2({1, 1})},   // bottom right
+        {OpenGL::vec2({-1.0f, 1.0f}), OpenGL::vec2({0, 0})},   // top left
+        {OpenGL::vec2({1.0f, 1.0f}), OpenGL::vec2({1, 0})}     // top right
     };
 
     screenVAO.create();

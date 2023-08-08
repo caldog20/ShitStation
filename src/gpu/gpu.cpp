@@ -99,7 +99,8 @@ void GPU::write0(u32 value) {
         commandPending = false;
     } else if (writeMode == Transfer) {
         transferWriteBuffer.push_back(value);
-        if (transferSize-- == 0) {
+        transferSize--;
+        if (transferSize == 0) {
             transferToVram();
             writeMode = Command;
         }

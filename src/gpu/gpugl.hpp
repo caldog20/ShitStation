@@ -14,6 +14,15 @@ struct Vertex {
 
     Vertex() : position({0, 0}), color(0), texpage(0), clut(0), texcoords(0) {}
     Vertex(u32 pos, u32 color) : color(color) {
+        setPosition(pos);
+        texpage = 0x8000;
+    }
+
+    Vertex(u32 pos, u32 color, u16 texpage, u16 clut, u16 texcoords) : color(color), texpage(texpage), clut(clut), texcoords(texcoords) {
+        setPosition(pos);
+    }
+
+    void setPosition(u32 pos) {
         const u16 x = pos & 0xFFFF;
         const u16 y = (pos >> 16) & 0xFFFF;
         position.x() = Helpers::signExtend16(x, 11);
@@ -65,7 +74,7 @@ class GPU_GL final : public GPU {
 
     void updateScissorBox();
     void updateDrawAreaScissor();
-
+    void syncSampleTexture();
     void fillRect();
 
     template <Polygon polygon, Shading shading, Transparency transparency>
@@ -92,6 +101,7 @@ class GPU_GL final : public GPU {
     OpenGL::ShaderProgram shaders;
     GLint uniformTextureLocation = 0;
     static constexpr int vboSize = 0x100000;
+    bool syncSampleTex = false;
 };
 
 }  // namespace GPU

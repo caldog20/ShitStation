@@ -13,8 +13,6 @@ class SoftGPU : public GPU {
     void transferToVram() override;
     void transferToCpu() override;
     void TransferVramToVram() override;
-
 };
 
 }  // namespace GPU
-

@@ -304,6 +304,7 @@ struct ShaderProgram {
                 char log[length];
                 glGetProgramInfoLog(shader, length, &length, log);
                 fprintf(stderr, "Error Linking Shader Program: %s\n", log);
+                exit(-1);
             }
         } else {
             glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
@@ -312,6 +313,7 @@ struct ShaderProgram {
                 char log[length];
                 glGetShaderInfoLog(shader, length, &length, log);
                 fprintf(stderr, "Error Compiling Shader: %s\n", log);
+                exit(-1);
             }
         }
     }
