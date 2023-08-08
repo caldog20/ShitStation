@@ -297,22 +297,23 @@ struct ShaderProgram {
     void verify(GLuint shader, ShaderType type) {
         GLint result;
         GLint length;
+        std::string log;
         if (type == ShaderType::Program) {
             glGetProgramiv(shader, GL_LINK_STATUS, &result);
             if (result != GL_TRUE) {
                 glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &length);
-                char log[length];
-                glGetProgramInfoLog(shader, length, &length, log);
-                fprintf(stderr, "Error Linking Shader Program: %s\n", log);
+                log.resize(length);
+                glGetProgramInfoLog(shader, length, &length, log.data());
+                fprintf(stderr, "Error Linking Shader Program: %s\n", log.c_str());
                 exit(-1);
             }
         } else {
             glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
             if (result != GL_TRUE) {
                 glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-                char log[length];
-                glGetShaderInfoLog(shader, length, &length, log);
-                fprintf(stderr, "Error Compiling Shader: %s\n", log);
+                log.resize(length);
+                glGetShaderInfoLog(shader, length, &length, log.data());
+                fprintf(stderr, "Error Compiling Shader: %s\n", log.c_str());
                 exit(-1);
             }
         }
