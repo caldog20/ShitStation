@@ -164,10 +164,10 @@ void PSX::update() {
     gpu.render();  // Dump any remaining verts
     gpu.vblank();
 
-    OpenGL::setViewport(width, height);
     screenVAO.bind();
     screenVBO.bind();
     gpu.getTexture().bind();
+    OpenGL::setViewport(width, height);
 
     screenShader.use();
     glUniform1i(uniformTextureLocation, 0);

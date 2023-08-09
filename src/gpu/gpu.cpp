@@ -32,8 +32,10 @@ void GPU::reset() {
     readMode = Command;
     writeMode = Command;
     vram.resize(VRAM_SIZE);
+    transferWriteBuffer.clear();
+    transferReadBuffer.clear();
     transferReadBuffer.resize(VRAM_SIZE);
-    transferWriteBuffer.resize(VRAM_SIZE);
+    transferWriteBuffer.reserve(VRAM_SIZE);
 
     dither = false;
     drawToDisplay = false;
@@ -111,9 +113,7 @@ void GPU::write1(u32 value) {
     auto index = (value >> 24) & 0xFF;
     switch (index) {
         // Reset GPU
-        case 0x0:
-            //            reset();
-            break;
+        case 0x0: reset(); break;
         // Reset Command Fifo
         case 0x1: resetFifo(); break;
         // Ack IRQ

@@ -15,7 +15,7 @@ option(ENABLE_SANITIZER_THREAD  "Enable Thread Sanitizer if available" OFF)
 option(ENABLE_SANITIZER_MEMORY  "Enable Memory Sanitizer if available" OFF)
 option(ENABLE_SANITIZER_UNDEFINED "Enable Undefined Behavior Sanitizer if available" OFF)
 option(ENABLE_CACHE "Strictly disable caching" ON)
-option(ENABLE_IPO  "Enable Interprocedural Optimization" OFF)
+option(ENABLE_IPO  "Enable Interprocedural Optimization" ON)
 option(WARNINGS_AS_ERRORS "Enable Warnings as Errors" OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -53,7 +53,8 @@ if (ENABLE_CACHE)
     try_enable_cache()
 endif()
 
-if (ENABLE_IPO)
+if (ENABLE_IPO AND CMAKE_BUILD_TYPE STREQUAL "Release")
+    message("Enabling IPO")
     enable_ipo()
 endif()
 

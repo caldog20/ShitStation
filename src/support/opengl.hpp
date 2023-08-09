@@ -106,6 +106,8 @@ static void enableScissor() { glEnable(GL_SCISSOR_TEST); }
 static void disableScissor() { glDisable(GL_SCISSOR_TEST); }
 static void setScissor(GLsizei width, GLsizei height) { glScissor(0, 0, width, height); }
 static void setScissor(GLsizei x, GLsizei y, GLsizei width, GLsizei height) { glScissor(x, y, width, height); }
+static inline void setPackAlignment(GLint param) { glPixelStorei(GL_PACK_ALIGNMENT, param); }
+static inline void setUnpackAlignment(GLint param) { glPixelStorei(GL_UNPACK_ALIGNMENT, param); }
 
 template <FB type = Default>
 static void checkFramebufferStatus() {

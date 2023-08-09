@@ -16,10 +16,10 @@ static const char* vertShader = R"(
     out vec4 outColor;
     flat out ivec2 texpageBase;
     flat out ivec2 clutBase;
-    flat out int outTexcoords;
+    out vec2 outTexcoords;
     flat out int texMode;
 
-    uniform vec2 u_drawOffsets = vec2(0.5f, -0.5f);
+    uniform vec2 u_drawOffsets = vec2(+0.5f, -0.5f);
 
     void main() {
         float x = float(inPos.x);
@@ -39,7 +39,7 @@ static const char* vertShader = R"(
             texMode = 4;
         } else {
             texMode = (inTexpage >> 7) & 3;
-            outTexcoords = inTexcoords;
+            outTexcoords = vec2((inTexcoords & 0xff), (inTexcoords >> 8) & 0xff);
             texpageBase = ivec2((inTexpage & 0xf) * 64, ((inTexpage >> 4) & 0x1) * 256);
             clutBase = ivec2((inClut & 0x3f) * 16, inClut >> 6);
         }
@@ -55,19 +55,78 @@ static const char* fragShader = R"(
     in vec4 outColor;
     flat in ivec2 texpageBase;
     flat in ivec2 clutBase;
-    flat in int outTexcoords;
+    in vec2 outTexcoords;
     flat in int texMode;
 
     layout(location = 0, index = 0) out vec4 fragColor;
     uniform sampler2D u_sampleTex;
+    uniform ivec4 u_texWindow;
+    vec4 cancelBlend = vec4(1.0, 1.0, 1.0, 0.0);
 
+    int color5(vec4 color) {
+        int r = int(floor(color.r * 31.0 + 0.5));
+        int g = int(floor(color.g * 31.0 + 0.5));
+        int b = int(floor(color.b * 31.0 + 0.5));
+        int a = int(ceil(color.a));
+        return r | (g << 5) | (b << 10) | (a << 15);
+    }
+
+    vec4 vramFetch(ivec2 coords) {
+        coords &= ivec2(1023, 511);
+        return texelFetch(u_sampleTex, coords, 0);
+    }
     void main() {
+//        fragColor = outColor;
+//        return;
         if (texMode == 4) {
             fragColor = outColor;
             return;
         }
 
+        ivec2 UV = ivec2(floor(outTexcoords + vec2(0.0001, 0.0001))) & ivec2(0xff);
+        UV = (UV & u_texWindow.xy) | u_texWindow.zw;
 
+        if (texMode == 0) {
+            // 4-bit
+            // Get texture coords
+            ivec2 coords = ivec2(texpageBase.x + (UV.x >> 2), texpageBase.y + UV.y);
+            // Get pixels from vram
+            vec4 color = vramFetch(coords);
+            // Convert to 5-bit color
+            int index = color5(color);
+            // Calculate clut index
+            index = ((index >> (int(outTexcoords.x) % 4) * 4)) & 0xf;
+            // Fetch color from clut
+            fragColor = vramFetch(ivec2(clutBase.x + index, clutBase.y));
+            // Discard if color is black for textures
+            if (fragColor.rgb == vec3(0.0, 0.0, 0.0)) discard;
+            // Blend vertex color with texture color
+            // Color scale of 2
+            vec4 finalColor = vec4(fragColor * outColor) / (128.0 / 255.0);
+            finalColor.a = 1.0;
+            fragColor = finalColor;
+        } else if (texMode == 1) {
+            ivec2 coords = ivec2(texpageBase.x + (UV.x >> 1), texpageBase.y + UV.y);
+            vec4 color = vramFetch(coords);
+
+            int index = color5(color);
+            index = ((index >> (UV.x % 2) * 8)) & 0xff;
+
+            fragColor = vramFetch(ivec2(clutBase.x + index, clutBase.y));
+
+            if (fragColor.rgb == vec3(0.0, 0.0, 0.0)) discard;
+
+            vec4 finalColor = vec4(fragColor * outColor) / (128.0 / 255.0);
+            finalColor.a = 1.0;
+            fragColor = finalColor;
+        } else if (texMode == 2) {
+            ivec2 coords = texpageBase + UV;
+            fragColor = vramFetch(coords);
+            if (fragColor.rgb == vec3(0.0, 0.0, 0.0)) discard;
+            vec4 finalColor = vec4(fragColor * outColor) / (128.0 / 255.0);
+            finalColor.a = 1.0;
+            fragColor = finalColor;
+        }
     }
 )";
 
@@ -117,7 +176,7 @@ void GPU_GL::init() {
     vao.bind();
     vbo.bind();
 
-    vao.setAttributeInt<int>(0, 2, sizeof(Vertex), offsetof(Vertex, position));
+    vao.setAttributeInt<GLshort>(0, 2, sizeof(Vertex), offsetof(Vertex, position));
     vao.enableAttribute(0);
 
     vao.setAttributeInt<int>(1, 1, sizeof(Vertex), offsetof(Vertex, color));
@@ -132,10 +191,15 @@ void GPU_GL::init() {
     vao.setAttributeInt<int>(4, 1, sizeof(Vertex), offsetof(Vertex, texcoords));
     vao.enableAttribute(4);
 
-    //    shaders.use();
-    //    uniformTextureLocation = shaders.getUniformLocation("u_vramTex");
-    //    glUniform1i(uniformTextureLocation, 0);
-    //    glUseProgram(0);
+    OpenGL::setPackAlignment(2);
+    OpenGL::setUnpackAlignment(2);
+
+    shaders.use();
+    uniformTextureLocation = shaders.getUniformLocation("u_sampleTex");
+    uniformTextureWindow = shaders.getUniformLocation("u_texWindow");
+    shaders.getUniformLocation("u_drawOffsets");
+    glUniform1i(uniformTextureLocation, 0);
+    glUseProgram(0);
 
     OpenGL::bindDefaultTexture();
     OpenGL::bindDefaultFramebuffer();
@@ -154,6 +218,7 @@ void GPU_GL::setupDrawEnvironment() {
     sampleTex.bind();
     OpenGL::setViewport(VRAM_WIDTH, VRAM_HEIGHT);
     shaders.use();
+    glUniform1i(uniformTextureLocation, 0);
 }
 
 void GPU_GL::render() {
@@ -202,6 +267,7 @@ void GPU_GL::internalCommand(u32 value) {
 }
 
 void GPU_GL::drawCommand() {
+    //    Log::info("GP0 Command {:#02x}\n", command);
     switch (command) {
         case 0x02: fillRect(); break;
         case 0xA0: {
@@ -215,29 +281,56 @@ void GPU_GL::drawCommand() {
             h = ((h - 1) & 0x1ff) + 1;
 
             u32 size = ((w * h) + 1) & ~1;
-            transferSize = size / 2;
-
+            size = size / 2;
+            transferSize = size;
             writeMode = Transfer;
             transferRect = {x, y, w, h};
             break;
         }
-        case 0x20:
-            drawPolygon<Polygon::Triangle, Shading::Flat, Transparency::Opaque>();
-            break;
-            //        case 0x22:
-            //            drawPolygon<Polygon::Triangle, Shading::Flat, Transparency::Transparent>();
-            //            break;
-        case 0x28:
-        case 0x29:
-            drawPolygon<Polygon::Quad, Shading::Flat, Transparency::Opaque>();
-            break;
-            //
+        case 0xC0: transferToCpu(); break;
+        case 0x20: drawPolygon<Polygon::Triangle, Shading::Flat, Transparency::Opaque>(); break;
+        case 0x22: drawPolygon<Polygon::Triangle, Shading::Flat, Transparency::Transparent>(); break;
+        case 0x24: drawPolygon<Polygon::Triangle, Shading::TexBlendFlat, Transparency::Opaque>(); break;
+        case 0x25: drawPolygon<Polygon::Triangle, Shading::RawTex, Transparency::Opaque>(); break;
+        case 0x26: drawPolygon<Polygon::Triangle, Shading::TexBlendFlat, Transparency::Transparent>(); break;
+        case 0x27: drawPolygon<Polygon::Triangle, Shading::RawTex, Transparency::Transparent>(); break;
+        case 0x28: drawPolygon<Polygon::Quad, Shading::Flat, Transparency::Opaque>(); break;
+        case 0x29: drawPolygon<Polygon::Quad, Shading::Flat, Transparency::Opaque>(); break;
+        case 0x2A: drawPolygon<Polygon::Quad, Shading::Flat, Transparency::Transparent>(); break;
+        case 0x2C: drawPolygon<Polygon::Quad, Shading::TexBlendFlat, Transparency::Opaque>(); break;
+        case 0x2D: drawPolygon<Polygon::Quad, Shading::RawTex, Transparency::Opaque>(); break;
+        case 0x2E: drawPolygon<Polygon::Quad, Shading::TexBlendFlat, Transparency::Transparent>(); break;
+        case 0x2F: drawPolygon<Polygon::Quad, Shading::RawTex, Transparency::Transparent>(); break;
         case 0x30: drawPolygon<Polygon::Triangle, Shading::Gouraud, Transparency::Opaque>(); break;
-        case 0x32:
-            //            drawPolygon<Polygon::Triangle, Shading::Gouraud, Transparency::Transparent>();
-            break;
-        case 0x38:
+        case 0x32: drawPolygon<Polygon::Triangle, Shading::Gouraud, Transparency::Transparent>(); break;
+        case 0x34: drawPolygon<Polygon::Triangle, Shading::TexBlendGouraud, Transparency::Opaque>(); break;
+        case 0x35: drawPolygon<Polygon::Triangle, Shading::RawTexGouraud, Transparency::Opaque>(); break;
+        case 0x36: drawPolygon<Polygon::Triangle, Shading::TexBlendGouraud, Transparency::Transparent>(); break;
+        case 0x37: drawPolygon<Polygon::Triangle, Shading::RawTexGouraud, Transparency::Transparent>(); break;
+        case 0x38: drawPolygon<Polygon::Quad, Shading::Gouraud, Transparency::Opaque>(); break;
         case 0x39: drawPolygon<Polygon::Quad, Shading::Gouraud, Transparency::Opaque>(); break;
+        case 0x3A: drawPolygon<Polygon::Quad, Shading::Gouraud, Transparency::Transparent>(); break;
+        case 0x3B: drawPolygon<Polygon::Quad, Shading::Gouraud, Transparency::Transparent>(); break;
+        case 0x3C: drawPolygon<Polygon::Quad, Shading::TexBlendGouraud, Transparency::Opaque>(); break;
+        case 0x3D: drawPolygon<Polygon::Quad, Shading::RawTexGouraud, Transparency::Opaque>(); break;
+        case 0x3E: drawPolygon<Polygon::Quad, Shading::TexBlendGouraud, Transparency::Transparent>(); break;
+        case 0x3F: drawPolygon<Polygon::Quad, Shading::RawTexGouraud, Transparency::Transparent>(); break;
+        // No line drawing
+        // 60 thru 7f Draw Rect
+        case 0x60: drawRect<Rectsize::RectVariable, Transparency::Opaque>(); break;
+        case 0x62: drawRect<Rectsize::RectVariable, Transparency::Transparent>(); break;
+        case 0x64: drawRect<Rectsize::RectVariable, Transparency::Opaque, Shading::TexBlendFlat>(); break;
+        case 0x65: drawRect<Rectsize::RectVariable, Transparency::Opaque, Shading::RawTex>(); break;
+        case 0x66: drawRect<Rectsize::RectVariable, Transparency::Transparent, Shading::TexBlendFlat>(); break;
+        case 0x67: drawRect<Rectsize::RectVariable, Transparency::Transparent, Shading::RawTex>(); break;
+        case 0x68: drawRect<Rectsize::Rect1, Transparency::Opaque>(); break;
+        case 0x70: drawRect<Rectsize::Rect8, Transparency::Opaque>(); break;
+        case 0x74: drawRect<Rectsize::Rect8, Transparency::Opaque, Shading::TexBlendFlat>(); break;
+        case 0x75: drawRect<Rectsize::Rect8, Transparency::Opaque, Shading::RawTex>(); break;
+        case 0x7C: drawRect<Rectsize::Rect16, Transparency::Opaque, Shading::TexBlendFlat>(); break;
+        case 0x7D: drawRect<Rectsize::Rect16, Transparency::Opaque, Shading::RawTex>(); break;
+        case 0x7E: drawRect<Rectsize::Rect16, Transparency::Transparent, Shading::TexBlendFlat>(); break;
+        case 0x7F: drawRect<Rectsize::Rect16, Transparency::Transparent, Shading::RawTex>(); break;
 
         default: Log::debug("Unimplemented GP0 Command {:#02x}\n", command);
     }
@@ -298,9 +391,65 @@ void GPU_GL::drawPolygon() {
 }
 
 template <GPU::Rectsize size, GPU::Transparency transparency, GPU::Shading shading>
-void GPU_GL::drawRect() {}
+void GPU_GL::drawRect() {
+    using enum Shading;
+    using enum Transparency;
+    using enum Rectsize;
 
-void GPU_GL::updateScissorBox() { OpenGL::setScissor(scissorBox.x, scissorBox.y, scissorBox.w, scissorBox.h); }
+    maybeRender(6);
+
+    int width;
+    int height;
+
+    if constexpr (size == Rect1) {
+        width = 1;
+        height = 1;
+    } else if constexpr (size == Rect8) {
+        width = 8;
+        height = 8;
+    } else if constexpr (size == Rect16) {
+        width = 16;
+        height = 16;
+    } else if constexpr (size == RectVariable) {
+        width = args[2] & 0x3ff;
+        height = (args[2] >> 16) & 0x1ff;
+    }
+
+    if constexpr (shading == None) {
+        u32 color = args[0];
+        u32 pos = args[1];
+
+        int x = Helpers::signExtend16(pos, 11);
+        int y = Helpers::signExtend16(pos, 5);
+
+        addVertex(x, y, color);
+        addVertex(x + width, y, color);
+        addVertex(x + width, y + height, color);
+        addVertex(x + width, y + height, color);
+        addVertex(x, y + height, color);
+        addVertex(x, y, color);
+        return;
+    }
+
+    // textured rect
+    u32 color = shading == TexBlendFlat ? args[0] : 0x808080;
+    u32 pos = args[1];
+    u32 clut = args[2] >> 16;
+    u32 uv = args[2] & 0xffff;
+    u16 texpage = rectTexpage;
+
+    int x = Helpers::signExtend16(pos, 11);
+    int y = Helpers::signExtend16(pos, 5);
+
+    addVertex(x, y, color, texpage, clut, uv);
+    addVertex(x + width, y, color, texpage, clut, uv);
+    addVertex(x + width, y + height, color, texpage, clut, uv);
+    addVertex(x + width, y + height, color, texpage, clut, uv);
+    addVertex(x, y + height, color, texpage, clut, uv);
+    addVertex(x, y, color, texpage, clut, uv);
+}
+
+void GPU_GL::updateScissorBox() const { OpenGL::setScissor(scissorBox.x, scissorBox.y, scissorBox.w, scissorBox.h); }
 
 void GPU_GL::updateDrawAreaScissor() {
     render();
@@ -315,20 +464,22 @@ void GPU_GL::updateDrawAreaScissor() {
 
 void GPU_GL::setTextureWindow(u32 value) {
     // 8 pixel steps - multiply by 8
-    texWindow.xMask = value & 0x1F;
-    texWindow.yMask = (value >> 5) & 0x1F;
-    texWindow.x = (value >> 10) & 0x1F;
-    texWindow.y = (value >> 15) & 0x1F;
+    render();
+    texWindow.xMask = value & 0x1F * 8;
+    texWindow.yMask = (value >> 5) & 0x1F * 8;
+    texWindow.x = (value >> 10) & 0x1F * 8;
+    texWindow.y = (value >> 15) & 0x1F * 8;
+    glUniform4i(uniformTextureWindow, ~texWindow.xMask, ~texWindow.yMask, texWindow.x & texWindow.xMask, texWindow.yMask & texWindow.y);
 }
 
 void GPU_GL::setDrawOffset(u32 value) {
+    render();
     u16 x = value & 0x7FF;
     u16 y = (value >> 11) & 0x7FF;
 
     drawOffset.x() = static_cast<s16>(x << 5) >> 5;
     drawOffset.y() = static_cast<s16>(y << 5) >> 5;
-    const auto location = shaders.getUniformLocation("u_drawOffsets");
-    glUniform2f(location, static_cast<float>(drawOffset.x()) + 0.5f, static_cast<float>(drawOffset.y()) - 0.5f);
+    glUniform2f(uniformDrawOffsetLocation, static_cast<float>(drawOffset.x()) + 0.5f, static_cast<float>(drawOffset.y()) - 0.5f);
 }
 
 void GPU_GL::setDrawAreaTopLeft(u32 value) {
@@ -395,7 +546,30 @@ void GPU_GL::transferToVram() {
     transferWriteBuffer.clear();
 }
 
-void GPU_GL::transferToCpu() {}
+void GPU_GL::transferToCpu() {
+    render();
+    readMode = GP0Mode::Transfer;
+
+    u16 x = args[1] & 0x3ff;
+    u16 y = (args[1] >> 16) & 0x1ff;
+
+    u16 w = args[2] & 0xffff;
+    u16 h = args[2] >> 16;
+
+    w = ((w - 1) & 0x3ff) + 1;
+    h = ((h - 1) & 0x1ff) + 1;
+
+    // If the transfer size (width * height) is odd,
+    // add 1 more transfer word to make it even
+    u32 size = ((w * h) + 1) & ~1;
+    transferSize = size / 2;
+    transferIndex = 0;
+
+    transferRect = {x, y, w, h};
+    // Read vram data into buffer so cpu can read it
+    transferReadBuffer.clear();
+    glReadPixels(transferRect.x, transferRect.y, transferRect.w, transferRect.h, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, transferReadBuffer.data());
+}
 
 void GPU_GL::TransferVramToVram() {}
 

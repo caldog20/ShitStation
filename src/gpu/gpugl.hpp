@@ -6,7 +6,7 @@
 namespace GPU {
 
 struct Vertex {
-    OpenGL::ivec2 position;
+    OpenGL::Vector<GLshort, 2> position;
     u32 color;
     u16 texpage;
     u16 clut;
@@ -18,6 +18,17 @@ struct Vertex {
         texpage = 0x8000;
     }
 
+    Vertex(u32 x, u32 y, u32 color) : color(color) {
+        position.x() = Helpers::signExtend16(x, 11);
+        position.y() = Helpers::signExtend16(y, 11);
+        texpage = 0x8000;
+    }
+
+    Vertex(u32 x, u32 y, u32 color, u16 texpage, u16 clut, u16 texcoords) : color(color), texpage(texpage), clut(clut), texcoords(texcoords) {
+        position.x() = Helpers::signExtend16(x, 11);
+        position.y() = Helpers::signExtend16(y, 11);
+    }
+
     Vertex(u32 pos, u32 color, u16 texpage, u16 clut, u16 texcoords) : color(color), texpage(texpage), clut(clut), texcoords(texcoords) {
         setPosition(pos);
     }
@@ -25,8 +36,8 @@ struct Vertex {
     void setPosition(u32 pos) {
         const u16 x = pos & 0xFFFF;
         const u16 y = (pos >> 16) & 0xFFFF;
-        position.x() = Helpers::signExtend16(x, 11);
-        position.y() = Helpers::signExtend16(y, 11);
+        position.x() = static_cast<GLshort>(Helpers::signExtend16(x, 11));
+        position.y() = static_cast<GLshort>(Helpers::signExtend16(y, 11));
     }
 };
 
@@ -72,7 +83,7 @@ class GPU_GL final : public GPU {
     void setDrawAreaBottomRight(u32 value) override;
     void setMaskBitSetting(u32 value) override;
 
-    void updateScissorBox();
+    void updateScissorBox() const;
     void updateDrawAreaScissor();
     void syncSampleTexture();
     void fillRect();
@@ -100,6 +111,8 @@ class GPU_GL final : public GPU {
 
     OpenGL::ShaderProgram shaders;
     GLint uniformTextureLocation = 0;
+    GLint uniformTextureWindow = 0;
+    GLint uniformDrawOffsetLocation = 0;
     static constexpr int vboSize = 0x100000;
     bool syncSampleTex = false;
 };
