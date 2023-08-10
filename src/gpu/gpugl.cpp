@@ -359,7 +359,7 @@ void GPU_GL::drawCommand() {
         case 0x25: drawPolygon<Polygon::Triangle, Shading::RawTex, Transparency::Opaque>(); break;
         case 0x26: drawPolygon<Polygon::Triangle, Shading::TexBlendFlat, Transparency::Transparent>(); break;
         case 0x27: drawPolygon<Polygon::Triangle, Shading::RawTex, Transparency::Transparent>(); break;
-        case 0x28: drawPolygon<Polygon::Quad, Shading::Flat, Transparency::Opaque>(); break;
+        case 0x28:
         case 0x29: drawPolygon<Polygon::Quad, Shading::Flat, Transparency::Opaque>(); break;
         case 0x2A: drawPolygon<Polygon::Quad, Shading::Flat, Transparency::Transparent>(); break;
         case 0x2C: drawPolygon<Polygon::Quad, Shading::TexBlendFlat, Transparency::Opaque>(); break;
@@ -372,9 +372,9 @@ void GPU_GL::drawCommand() {
         case 0x35: drawPolygon<Polygon::Triangle, Shading::RawTexGouraud, Transparency::Opaque>(); break;
         case 0x36: drawPolygon<Polygon::Triangle, Shading::TexBlendGouraud, Transparency::Transparent>(); break;
         case 0x37: drawPolygon<Polygon::Triangle, Shading::RawTexGouraud, Transparency::Transparent>(); break;
-        case 0x38: drawPolygon<Polygon::Quad, Shading::Gouraud, Transparency::Opaque>(); break;
+        case 0x38:
         case 0x39: drawPolygon<Polygon::Quad, Shading::Gouraud, Transparency::Opaque>(); break;
-        case 0x3A: drawPolygon<Polygon::Quad, Shading::Gouraud, Transparency::Transparent>(); break;
+        case 0x3A:
         case 0x3B: drawPolygon<Polygon::Quad, Shading::Gouraud, Transparency::Transparent>(); break;
         case 0x3C: drawPolygon<Polygon::Quad, Shading::TexBlendGouraud, Transparency::Opaque>(); break;
         case 0x3D: drawPolygon<Polygon::Quad, Shading::RawTexGouraud, Transparency::Opaque>(); break;
