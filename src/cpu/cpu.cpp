@@ -43,7 +43,7 @@ void Cpu::step() {
         bus.shellReached();
     }
     instruction = bus.fetch(PC);
-    //    Log::info("Count: {} PC: {:#08x}\n", count, PC);
+
     if ((PC % 4) != 0) {
         Log::warn("[CPU] Unaligned PC {:#x}\n", PC);
         ExceptionHandler(BadLoadAddress);
@@ -103,15 +103,16 @@ void Cpu::handleKernelCalls() {
     }
 }
 
-void Cpu::triggerInterrupt() {
-    regs.cop0.cause &= static_cast<u32>(~0x400);
-    if (bus.isIRQPending()) {
-        regs.cop0.cause |= static_cast<u32>(0x400);
-    }
-}
+void Cpu::triggerInterrupt() {}
 
 void Cpu::checkInterrupts() {
-    bool iec = (regs.cop0.status & 1);
+    if (bus.isIRQPending()) {
+        regs.cop0.cause |= static_cast<u32>(0x400);
+    } else {
+        regs.cop0.cause &= static_cast<u32>(~0x400);
+    }
+
+    bool iec = (regs.cop0.status & 1) == 1;
     u8 im = (regs.cop0.status >> 8) & 0xFF;
     u8 ip = (regs.cop0.cause >> 8) & 0xFF;
 
@@ -154,7 +155,7 @@ void Cpu::ExceptionHandler(Exception cause, u32 cop) {
     }
 
     setPC(vector);
-    //    Log::debug("ExceptionHandler at PC {:#08x}\n", currentPC);
+//    Log::debug("ExceptionHandler at PC {:#08x}\n", currentPC);
 }
 
 void Cpu::RFE() {
@@ -165,7 +166,7 @@ void Cpu::RFE() {
     u32 mode = regs.cop0.status & 0x3F;
     regs.cop0.status &= ~(u32)0xF;
     regs.cop0.status |= mode >> 2;
-    //    Log::debug("Return from Exception\n");
+//    Log::debug("Return from Exception\n");
 }
 
 void Cpu::SYSCALL() { ExceptionHandler(Exception::Syscall); }
@@ -216,7 +217,7 @@ void Cpu::JAL() {
 }
 
 void Cpu::JALR() {
-    delayedLoad.set(instruction.rd, nextPC);
+    regs.set(instruction.rd, nextPC);
     nextPC = regs.get(instruction.rs);
     branch = true;
     branchTaken = true;
