@@ -1,7 +1,7 @@
-#include "gpugl.hpp"
-
 #include <algorithm>
+#include <utility>
 
+#include "gpugl.hpp"
 #include "scheduler/scheduler.hpp"
 
 namespace GPU {
@@ -567,47 +567,41 @@ void GPU_GL::drawRect() {
 
 template <GPU::Shading shading, GPU::Transparency transparency>
 void GPU_GL::drawLine() {
+    // This line drawing algorithm was taken from the old opengl gpu on pcsx-redux
+    // Since I didn't know how to draw lines
     using enum Shading;
     using enum Transparency;
+
+
+    maybeRender(6);
 
     setTransparency<transparency>();
     if constexpr (transparency == Transparent) {
         setBlendModeTexpage(rectTexpage);
     }
 
-    maybeRender(6);
-
-    struct Point {
-        u32 pos;
-        u32 color;
-    };
-
     Point p1;
     Point p2;
 
     if constexpr (shading == Flat) {
-        p1.color = args[0];
-        p1.pos = args[1];
-        p2.color = args[0];
-        p2.pos = args[2];
+        p1 = {args[1], args[0]};
+        p2 = {args[2], args[0]};
     } else {
-        p1.color = args[0];
-        p1.pos = args[1];
-        p2.color = args[2];
-        p2.pos = args[3];
+        p1 = {args[1], args[0]};
+        p2 = {args[3], args[2]};
     }
 
-    const auto getPos = [](const Point& point) -> std::pair<int32_t, int32_t> {
-        int32_t x = int32_t(point.pos) << 21 >> 21;
-        int32_t y = int32_t(point.pos) << 5 >> 21;
+    const auto getPos = [](const Point& point) -> std::pair<s32, s32> {
+        s32 x = s32(point.pos) << 21 >> 21;
+        s32 y = s32(point.pos) << 5 >> 21;
         return {x, y};
     };
 
     auto [x1, y1] = getPos(p1);
     auto [x2, y2] = getPos(p2);
 
-    const int32_t dx = x2 - x1;
-    const int32_t dy = y2 - y1;
+    const s32 dx = x2 - x1;
+    const s32 dy = y2 - y1;
 
     const auto absDx = std::abs(dx);
     const auto absDy = std::abs(dy);

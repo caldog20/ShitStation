@@ -40,6 +40,14 @@ struct TextureWindow {
     u16 yMask;
 };
 
+struct Point {
+    u32 pos;
+    u32 color;
+
+    Point() : pos(0), color(0) {}
+    Point(u32 pos, u32 color) : pos(pos), color(color) {}
+};
+
 class GPU {
   public:
     GPU(Scheduler::Scheduler& scheduler);
