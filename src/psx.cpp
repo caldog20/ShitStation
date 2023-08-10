@@ -30,7 +30,7 @@ PSX::PSX()
     }
 
     SDL_GL_MakeCurrent(window, glContext);
-    SDL_GL_SetSwapInterval(0);  // VSync on by default
+    SDL_GL_SetSwapInterval(1);  // VSync on by default
 
     if (!gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress)) {
         Helpers::panic("Error initializing glad GL Loader: {}", SDL_GetError());
