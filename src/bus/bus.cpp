@@ -471,10 +471,10 @@ void Bus::triggerInterrupt(IRQ irq) {
 void Bus::doSideload() {
     auto addr = mask(sideloadAddr);
     auto size = sideloadEXE.size();
+
     cpu.setPC(sideloadPC);
-    for (auto i = 0; i < size; i++) {
-        ram[addr + i] = sideloadEXE[i];
-    }
+
+    std::memcpy(ram + addr, sideloadEXE.data(), size);
 }
 
 }  // namespace Bus
