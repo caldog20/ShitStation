@@ -4,7 +4,7 @@
 
 #include "glad/gl.h"
 
-#define OPENGL_SHADER_VERSION "#version 410\n"
+#define OPENGL_SHADER_VERSION "#version 410 core\n"
 
 PSX::PSX()
     : bus(cpu, dma, timers, cdrom, sio, gpu), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler), gpu(scheduler), cdrom(scheduler),
@@ -37,24 +37,34 @@ PSX::PSX()
     }
 
     static const char* vertexSource = OPENGL_SHADER_VERSION R"(
-		layout (location = 0) in vec2 aPos;
-		layout (location = 1) in vec2 aTexCoords;
 		out vec2 TexCoords;
 
 		void main() {
-			gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);
-			TexCoords = aTexCoords;
+            const vec2 pos[4] = vec2[](
+                vec2(-1.0, -1.0),
+                vec2(1.0, -1.0),
+                vec2(-1.0, 1.0),
+                vec2(1.0, 1.0)
+            );
+            const vec2 texcoords[4] = vec2[](
+                vec2(0.0, 1.0),
+                vec2(1.0, 1.0),
+                vec2(0.0, 0.0),
+                vec2(1.0, 0.0)
+            );
+
+			gl_Position = vec4(pos[gl_VertexID], 0.0, 1.0);
+			TexCoords = texcoords[gl_VertexID];
 		}
 	)";
 
     static const char* fragSource = OPENGL_SHADER_VERSION R"(
-		out vec4 FragColor;
 		in vec2 TexCoords;
+        out vec4 FragColor;
 		uniform sampler2D screenTexture;
 
 		void main() {
 			FragColor = texture(screenTexture, TexCoords);
-			//FragColor = vec4(1.0, 1.0, 0.0, 1.0);
 		}
 	)";
 
@@ -62,25 +72,8 @@ PSX::PSX()
 
     screenShader.build(vertexSource, fragSource);
 
-    std::vector<ScreenVertex> vertices = {
-        {OpenGL::vec2({-1.0f, -1.0f}), OpenGL::vec2({0, 1})},  // bottom left
-        {OpenGL::vec2({1.0f, -1.0f}), OpenGL::vec2({1, 1})},   // bottom right
-        {OpenGL::vec2({-1.0f, 1.0f}), OpenGL::vec2({0, 0})},   // top left
-        {OpenGL::vec2({1.0f, 1.0f}), OpenGL::vec2({1, 0})}     // top right
-    };
-
     screenVAO.create();
-    screenVAO.bind();
-
     screenVBO.create(OpenGL::ArrayBuffer);
-    screenVBO.bind();
-    screenVBO.data(vertices.data(), vertices.size(), OpenGL::StaticDraw);
-    screenVAO.setAttributeFloat<float>(0, 2, sizeof(ScreenVertex), reinterpret_cast<void*>(offsetof(ScreenVertex, pos)));
-    screenVAO.enableAttribute(0);
-    screenVAO.setAttributeFloat<float>(1, 2, sizeof(ScreenVertex), reinterpret_cast<void*>(offsetof(ScreenVertex, uv)));
-    screenVAO.enableAttribute(1);
-    OpenGL::bindDefaultTexture();
-    OpenGL::bindDefaultFramebuffer();
 
     gpu.init();  // Init GPU after OpenGL is initialized
     reset();
