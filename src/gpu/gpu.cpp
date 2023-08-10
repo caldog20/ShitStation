@@ -168,7 +168,7 @@ void GPU::updateGPUStat() {
 
     gpustat |= 1 << 30;
     // TODO: Fix this later
-    //    gpustat |= 1 << 31;
+    gpustat |= 1 << 31;
 
     gpustat |= dmaRequest << 25;
 }

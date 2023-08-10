@@ -10,7 +10,7 @@ struct Vertex {
     u32 color;
     u16 texpage;
     u16 clut;
-    OpenGL::Vector<GLushort, 2>  texcoords;
+    OpenGL::Vector<GLushort, 2> texcoords;
 
     Vertex() : position({0, 0}), color(0), texpage(0), clut(0), texcoords({0, 0}) {}
     Vertex(u32 pos, u32 color) : color(color) {
@@ -19,21 +19,21 @@ struct Vertex {
     }
 
     Vertex(u32 x, u32 y, u32 color) : color(color) {
-        position.x() = Helpers::signExtend16(x, 11);
-        position.y() = Helpers::signExtend16(y, 11);
+        position.x() = int(x) << 21 >> 21;
+        position.y() = int(y) << 21 >> 21;
         texpage = 0x8000;
     }
 
     Vertex(u32 x, u32 y, u32 color, u16 texpage, u16 clut, u16 texCoords) : color(color), texpage(texpage), clut(clut) {
-        position.x() = Helpers::signExtend16(x, 11);
-        position.y() = Helpers::signExtend16(y, 11);
+        position.x() = int(x) << 21 >> 21;
+        position.y() = int(y) << 21 >> 21;
         texcoords.x() = texCoords & 0xFF;
         texcoords.y() = (texCoords >> 8) & 0xFF;
     }
 
     Vertex(u32 x, u32 y, u32 color, u16 texpage, u16 clut, u16 tx, u16 ty) : color(color), texpage(texpage), clut(clut) {
-        position.x() = Helpers::signExtend16(x, 11);
-        position.y() = Helpers::signExtend16(y, 11);
+        position.x() = int(x) << 21 >> 21;
+        position.y() = int(y) << 21 >> 21;
         texcoords.x() = tx;
         texcoords.y() = ty;
     }
@@ -42,14 +42,13 @@ struct Vertex {
         setPosition(pos);
         texcoords.x() = texCoords & 0xFF;
         texcoords.y() = (texCoords >> 8) & 0xFF;
-
     }
 
     void setPosition(u32 pos) {
         const u16 x = pos & 0xFFFF;
         const u16 y = (pos >> 16) & 0xFFFF;
-        position.x() = static_cast<GLshort>(Helpers::signExtend16(x, 11));
-        position.y() = static_cast<GLshort>(Helpers::signExtend16(y, 11));
+        position.x() = int(x) << 21 >> 21;
+        position.y() = int(y) << 21 >> 21;
     }
 };
 

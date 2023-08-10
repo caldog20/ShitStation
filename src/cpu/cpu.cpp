@@ -3,7 +3,6 @@
 #include "bus/bus.hpp"
 #include "support/log.hpp"
 
-
 namespace Cpu {
 
 Cpu::Cpu(Bus::Bus& bus) : bus(bus) { reset(); }
@@ -34,7 +33,6 @@ void Cpu::reset() {
     totalCycles = 0;
     cycleTarget = 0;
     ttyBuffer.clear();
-
 }
 
 void Cpu::run() {}
@@ -107,7 +105,6 @@ void Cpu::handleKernelCalls() {
                 Log::info("[OpenEvent] {} - {:#08X}\n", magic_enum::enum_name<KernelEvents>(static_cast<KernelEvents>(e & 0xFFFFFFF)), e);
                 break;
             }
-
         }
     }
 }

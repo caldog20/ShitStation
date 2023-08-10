@@ -91,7 +91,7 @@ void CDROM::tryStartCommand() {
     m_command = m_pendingCommand;
     m_pendingCommand = None;
 
-//    Log::debug("[CDROM] Starting Command: {}\n", magic_enum::enum_name(m_command));
+    //    Log::debug("[CDROM] Starting Command: {}\n", magic_enum::enum_name(m_command));
 
     if (m_command == Init) {
         m_statusCode.r = 0;
@@ -412,7 +412,7 @@ void CDROM::write3(u8 value) {
         case 0: {
             m_request.r = value;
             if (value & 0x80) {
-//                Log::debug("[CDROM] Request Register: Data Requested\n");
+                //                Log::debug("[CDROM] Request Register: Data Requested\n");
                 u32 sectorSize = (m_mode.SectorSize.Value() == 1 ? 2340 : 2048);
                 if (m_dataFifo.empty() || m_dataFifoIndex >= sectorSize) {
                     m_dataFifoIndex = 0;
@@ -420,17 +420,17 @@ void CDROM::write3(u8 value) {
                     m_dataFifo = m_sector;
                 }
             } else {
-//                Log::debug("[CDROM] Request Register: Data Not Requested - Clearing data Fifo\n");
+                //                Log::debug("[CDROM] Request Register: Data Not Requested - Clearing data Fifo\n");
                 m_dataFifo.clear();
                 m_dataFifoIndex = 0;
                 m_status.DataFifoReadReady = 0;
             }
         }
         case 1: {
-//            Log::debug(
-//                "[CDROM] Acking IRQ Flags with {:#02x} - previous: {:#02x} new: {:#02x}\n", value & 0x1F, m_irqFlags & 0x1F,
-//                m_irqFlags & ~(value & 0x1F)
-//            );
+            //            Log::debug(
+            //                "[CDROM] Acking IRQ Flags with {:#02x} - previous: {:#02x} new: {:#02x}\n", value & 0x1F, m_irqFlags & 0x1F,
+            //                m_irqFlags & ~(value & 0x1F)
+            //            );
             m_irqFlags &= ~(value & 0x1F);
             m_status.Busy = 0;
             if (value & 0x40) {

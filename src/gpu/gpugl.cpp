@@ -7,7 +7,7 @@
 namespace GPU {
 
 static const char* vertShader = R"(
-    #version 330 core
+    #version 410 core
     layout (location = 0) in ivec2 inPos;
     layout (location = 1) in uint inColor;
     layout (location = 3) in int inClut;
@@ -55,7 +55,7 @@ static const char* vertShader = R"(
 )";
 
 static const char* fragShader = R"(
-    #version 330 core
+    #version 410 core
 
      in vec4 vertexColor;
      in vec2 texCoords;
@@ -181,7 +181,6 @@ void GPU_GL::reset() {
     uniformBlendFactors = shaders.getUniformLocation("u_blendFactors");
     uniformOpaqueBlendFactors = shaders.getUniformLocation("u_opaqueBlendFactors");
 
-
     inVblank = false;
     lineCount = 0;
 
@@ -191,9 +190,6 @@ void GPU_GL::reset() {
     setDisplayEnable(false);
     setTextureWindow(0);
     setDrawOffset(0);
-
-
-
 }
 
 void GPU_GL::init() {
@@ -245,8 +241,6 @@ void GPU_GL::init() {
 
     OpenGL::setPackAlignment(2);
     OpenGL::setUnpackAlignment(2);
-
-
 
     OpenGL::bindDefaultTexture();
     OpenGL::bindDefaultFramebuffer();
@@ -303,13 +297,10 @@ void GPU_GL::vblank() {
         OpenGL::disableBlend();
     }
 
-
-
     vao.unbind();
     vbo.unbind();
     OpenGL::bindDefaultFramebuffer();
     OpenGL::bindDefaultTexture();
-
 }
 
 void GPU_GL::internalCommand(u32 value) {
@@ -336,7 +327,7 @@ void GPU_GL::internalCommand(u32 value) {
 }
 
 void GPU_GL::drawCommand() {
-    Log::info("GP0 Command {:#02x}\n", command);
+    //    Log::info("GP0 Command {:#02x}\n", command);
     switch (command) {
         case 0x01:
             render();
@@ -431,7 +422,6 @@ void GPU_GL::drawPolygon() {
 
     setTransparency<transparency>();
 
-
     if constexpr (shading == Flat) {
         if constexpr (transparency == Transparent) {
             setBlendModeTexpage(rectTexpage);
@@ -464,7 +454,7 @@ void GPU_GL::drawPolygon() {
 
     if constexpr (shading == TexBlendFlat || shading == RawTex) {
         if constexpr (transparency == Transparent) {
-                setBlendModeTexpage(args[4] >> 16);
+            setBlendModeTexpage(args[4] >> 16);
         }
         u32 color = shading == TexBlendFlat ? args[0] : 0x808080;
         u16 texpage = (args[4] >> 16) & 0x3FFF;
@@ -532,16 +522,16 @@ void GPU_GL::drawRect() {
         width = 16;
         height = 16;
     } else if constexpr (size == RectVariable) {
-        width = args[2] & 0x3ff;
-        height = (args[2] >> 16) & 0x1ff;
+        width = args[3] & 0x3ff;
+        height = (args[3] >> 16) & 0x1ff;
     }
 
     if constexpr (shading == None) {
         u32 color = args[0];
         u32 pos = args[1];
 
-        int x = Helpers::signExtend16(pos, 11);
-        int y = Helpers::signExtend16(pos, 5);
+        const int x = int(pos) << 21 >> 21;
+        const int y = int(pos) << 5 >> 21;
 
         addVertex(x, y, color);
         addVertex(x + width, y, color);
@@ -561,15 +551,18 @@ void GPU_GL::drawRect() {
     u32 v = uv >> 8;
     u16 texpage = rectTexpage;
 
-    int x = Helpers::signExtend16(pos, 11);
-    int y = Helpers::signExtend16(pos, 5);
+    //    int x = Helpers::signExtend16(pos, 11);
+    //    int y = Helpers::signExtend16(pos, 5);
+
+    const int x = int(pos) << 21 >> 21;
+    const int y = int(pos) << 5 >> 21;
 
     addVertex(x, y, color, texpage, clut, u, v);
     addVertex(x + width, y, color, texpage, clut, u + width, v);
     addVertex(x + width, y + height, color, texpage, clut, u + width, v + height);
     addVertex(x + width, y + height, color, texpage, clut, u + width, v + height);
     addVertex(x, y + height, color, texpage, clut, u, v + height);
-    addVertex(x, y, color, texpage, clut, u,  v);
+    addVertex(x, y, color, texpage, clut, u, v);
 }
 
 template <GPU::Shading shading, GPU::Transparency transparency>
@@ -670,20 +663,22 @@ void GPU_GL::updateDrawAreaScissor() {
 void GPU_GL::setTextureWindow(u32 value) {
     // 8 pixel steps - multiply by 8
     render();
-    texWindow.xMask = value & 0x1F * 8;
-    texWindow.yMask = (value >> 5) & 0x1F * 8;
-    texWindow.x = (value >> 10) & 0x1F * 8;
-    texWindow.y = (value >> 15) & 0x1F * 8;
+    texWindow.xMask = (value & 0x1F) * 8;
+    texWindow.yMask = ((value >> 5) & 0x1F) * 8;
+    texWindow.x = ((value >> 10) & 0x1F) * 8;
+    texWindow.y = ((value >> 15) & 0x1F) * 8;
     glUniform4i(uniformTextureWindow, ~texWindow.xMask, ~texWindow.yMask, texWindow.x & texWindow.xMask, texWindow.yMask & texWindow.y);
 }
 
 void GPU_GL::setDrawOffset(u32 value) {
     render();
-    u16 x = value & 0x7FF;
-    u16 y = (value >> 11) & 0x7FF;
 
-    drawOffset.x() = static_cast<s16>(x << 5) >> 5;
-    drawOffset.y() = static_cast<s16>(y << 5) >> 5;
+    const auto x = (s32)value << 21 >> 21;
+    const auto y = (s32)value << 10 >> 21;
+
+    drawOffset.x() = x;
+    drawOffset.y() = y;
+
     glUniform2f(uniformDrawOffsetLocation, static_cast<float>(drawOffset.x()) + 0.5f, static_cast<float>(drawOffset.y()) - 0.5f);
 }
 
@@ -859,12 +854,12 @@ void GPU_GL::setBlendFactors(float source, float destination) {
         blendFactors.x() = source;
         blendFactors.y() = destination;
 
-        glUniform4f(uniformBlendFactors, source, source, source,destination);
+        glUniform4f(uniformBlendFactors, source, source, source, destination);
     }
 }
 
 void GPU_GL::setBlendModeTexpage(u32 texpage) {
-    const auto blendMode = (texpage >> 5 ) & 3;
+    const auto blendMode = (texpage >> 5) & 3;
     if (lastBlendMode != blendMode) {
         render();
         lastBlendMode = blendMode;
@@ -879,8 +874,7 @@ void GPU_GL::setBlendModeTexpage(u32 texpage) {
                 glBlendEquation(GL_FUNC_ADD);
                 setBlendFactors(1.0, 0.0);
                 break;
-            case 2:
-                break;
+            case 2: break;
             case 3:
                 glBlendEquation(GL_FUNC_ADD);
                 setBlendFactors(0.25, 1.0);

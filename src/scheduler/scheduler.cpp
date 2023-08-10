@@ -27,7 +27,7 @@ void Scheduler::reset() {
 void Scheduler::scheduleInterrupt(Cycles cycleCount, Bus::IRQ irq) {
     scheduleEvent(cycleCount, [&]() {
         bus.triggerInterrupt(irq);
-//        Log::debug("Interrupt triggered: {}\n", magic_enum::enum_name(irq));
+        //        Log::debug("Interrupt triggered: {}\n", magic_enum::enum_name(irq));
     });
 }
 

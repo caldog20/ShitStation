@@ -4,8 +4,8 @@
 #include <string>
 
 #include "BitField.hpp"
-#include "support/helpers.hpp"
 #include "magic_enum.hpp"
+#include "support/helpers.hpp"
 
 namespace Bus {
 class Bus;
@@ -185,10 +185,6 @@ class Cpu {
     const u32 RESET_VECTOR = 0xbfc00000;
     const u32 SHELL_PC = 0x80030000;
     const u32 ExceptionHandlerAddr[2] = {0x80000080, 0xbfc00180};
-
-
-
-
 
     void ExceptionHandler(Exception cause, u32 cop = 0);
     void Branch(bool link = false);
