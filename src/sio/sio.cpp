@@ -273,6 +273,8 @@ void Pad::initKeyCodes() {
     m_buttonLUT[SDLK_1] = DigitalPadInputs::R1;
     m_buttonLUT[SDLK_3] = DigitalPadInputs::R2;
 
+    m_buttonLUT[SDLK_RETURN] = DigitalPadInputs::Start;
+
     // Do Other keys
 }
 // TODO Replace hardcoded values when more pads are implemented
@@ -280,6 +282,7 @@ void Pad::reset() {
     m_status = Status::Idle;
     m_type = ControllerType::Digital;
     m_buttons = 0xffff;
+    initKeyCodes();
 }
 
 void Pad::ack() {}

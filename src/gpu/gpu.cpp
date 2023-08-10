@@ -1,10 +1,9 @@
 #include "gpu.hpp"
-
-#include <algorithm>
+#include "scheduler/scheduler.hpp"
 
 namespace GPU {
 
-GPU::GPU() {}
+GPU::GPU(Scheduler::Scheduler& scheduler) : scheduler(scheduler) {}
 
 GPU::~GPU() {}
 
@@ -60,7 +59,7 @@ void GPU::reset() {
 }
 
 u32 GPU::read1() {
-    // return gpustat
+//    return gpustat;
     return 0b01011110100000000000000000000000;
 }
 
@@ -168,7 +167,7 @@ void GPU::updateGPUStat() {
 
     gpustat |= 1 << 30;
     // TODO: Fix this later
-    gpustat |= static_cast<u32>(1 << 31);
+//    gpustat |= 1 << 31;
 
     gpustat |= dmaRequest << 25;
 }

@@ -7,8 +7,9 @@
 #define OPENGL_SHADER_VERSION "#version 410\n"
 
 PSX::PSX()
-    : bus(cpu, dma, timers, cdrom, sio, gpu), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler), cdrom(scheduler),
-      sio(scheduler) {
+    : bus(cpu, dma, timers, cdrom, sio, gpu), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler), gpu(scheduler),
+      cdrom(scheduler), sio(scheduler) {
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
         Helpers::panic("Error initializing SDL: {}", SDL_GetError());
     }
@@ -146,12 +147,13 @@ void PSX::tempScheduleVBlank() {
 
 void PSX::update() {
     auto startTime = SDL_GetTicks();
-    SDL_PollEvent(&event);
+
     if (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) open = false;
         if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window)) {
             open = false;
         }
+        if (event.type == SDL_KEYUP || event.type == SDL_KEYDOWN) sio.pad.keyCallback(event.key);
     }
 
     if (running) {
@@ -210,7 +212,9 @@ void PSX::loadBIOS(const std::filesystem::path& path) {
     biosLoaded = true;
 }
 
-void PSX::loadDisc(const std::filesystem::path& path) {}
+void PSX::loadDisc(const std::filesystem::path& path) {
+    cdrom.loadDisc(path);
+}
 
 void PSX::sideload(const std::filesystem::path& path) {
     u32 initialPC = 0;
