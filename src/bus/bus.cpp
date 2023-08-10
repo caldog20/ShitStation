@@ -266,6 +266,11 @@ u32 Bus::read32(u32 address) {
         return sio.read<u32>(offset);
     }
 
+    if (MEMCONTROL.contains(hw_address)) {
+        auto offset = MEMCONTROL.offset(hw_address);
+        return MemControl[offset >> 2];
+    }
+
     // EXP1
     // GPU
 

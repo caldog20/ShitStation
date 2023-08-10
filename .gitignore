@@ -29,6 +29,7 @@ cmake-build-*/
 *.lib
 
 # Executables
+*.ps-exe
 *.exe
 *.out
 *.app
