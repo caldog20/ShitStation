@@ -175,7 +175,7 @@ void CDROM::tryStartCommand() {
         m_ints.emplace(InterruptCause::INT3);
         m_responseFifo.push(m_statusCode.r);
         scheduleInterrupt(120000);
-        Log::info("[CDROM] SetLoc to {}:{}:{} to LSN: {}\n", m_location.min, m_location.sec, m_location.sect, m_setlocLSN);
+//        Log::info("[CDROM] SetLoc to {}:{}:{} to LSN: {}\n", m_location.min, m_location.sec, m_location.sect, m_setlocLSN);
     }
 
     if (m_command == SeekL) {
@@ -201,7 +201,7 @@ void CDROM::tryStartCommand() {
             m_lsn = m_setlocLSN;
             m_discImage.seekg(m_lsn, std::ios::beg);
             m_updateLoc = false;
-            Log::info("[CDROM] Implicit Seek to LSN: {}\n", m_lsn);
+//            Log::info("[CDROM] Implicit Seek to LSN: {}\n", m_lsn);
         }
         scheduleRead();
     }
