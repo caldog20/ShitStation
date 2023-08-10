@@ -328,30 +328,33 @@ void GPU_GL::internalCommand(u32 value) {
 
 void GPU_GL::drawCommand() {
     //    Log::info("GP0 Command {:#02x}\n", command);
+
+    const auto prepVramTransfer = [&] {
+        u16 x = args[1] & 0x3ff;
+        u16 y = (args[1] >> 16) & 0x1ff;
+
+        u16 w = args[2] & 0xffff;
+        u16 h = args[2] >> 16;
+
+        w = ((w - 1) & 0x3ff) + 1;
+        h = ((h - 1) & 0x1ff) + 1;
+
+        u32 size = ((w * h) + 1) & ~1;
+        size = size / 2;
+        transferSize = size;
+        writeMode = Transfer;
+        transferRect = {x, y, w, h};
+    };
+
     switch (command) {
         case 0x01:
+            // Flush Tex cache
             render();
             syncSampleTex = true;
             break;
         case 0x02: fillRect(); break;
         case 0x80: TransferVramToVram(); break;
-        case 0xA0: {
-            u16 x = args[1] & 0x3ff;
-            u16 y = (args[1] >> 16) & 0x1ff;
-
-            u16 w = args[2] & 0xffff;
-            u16 h = args[2] >> 16;
-
-            w = ((w - 1) & 0x3ff) + 1;
-            h = ((h - 1) & 0x1ff) + 1;
-
-            u32 size = ((w * h) + 1) & ~1;
-            size = size / 2;
-            transferSize = size;
-            writeMode = Transfer;
-            transferRect = {x, y, w, h};
-            break;
-        }
+        case 0xA0: prepVramTransfer(); break;
         case 0xC0: transferToCpu(); break;
         case 0x20: drawPolygon<Polygon::Triangle, Shading::Flat, Transparency::Opaque>(); break;
         case 0x22: drawPolygon<Polygon::Triangle, Shading::Flat, Transparency::Transparent>(); break;
