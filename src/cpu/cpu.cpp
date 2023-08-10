@@ -3,6 +3,7 @@
 #include "bus/bus.hpp"
 #include "support/log.hpp"
 
+
 namespace Cpu {
 
 Cpu::Cpu(Bus::Bus& bus) : bus(bus) { reset(); }
@@ -33,6 +34,7 @@ void Cpu::reset() {
     totalCycles = 0;
     cycleTarget = 0;
     ttyBuffer.clear();
+
 }
 
 void Cpu::run() {}
@@ -98,7 +100,14 @@ void Cpu::handleKernelCalls() {
                     break;
                 }
                 ttyBuffer += c;
+                break;
             }
+            case 0x08: {
+                const u32 e = regs.gpr[A0];
+                Log::info("[OpenEvent] {} - {:#08X}\n", magic_enum::enum_name<KernelEvents>(static_cast<KernelEvents>(e & 0xFFFFFFF)), e);
+                break;
+            }
+
         }
     }
 }
@@ -155,7 +164,7 @@ void Cpu::ExceptionHandler(Exception cause, u32 cop) {
     }
 
     setPC(vector);
-//    Log::debug("ExceptionHandler at PC {:#08x}\n", currentPC);
+    //    Log::debug("ExceptionHandler at PC {:#08x}\n", currentPC);
 }
 
 void Cpu::RFE() {
@@ -166,7 +175,7 @@ void Cpu::RFE() {
     u32 mode = regs.cop0.status & 0x3F;
     regs.cop0.status &= ~(u32)0xF;
     regs.cop0.status |= mode >> 2;
-//    Log::debug("Return from Exception\n");
+    //    Log::debug("Return from Exception\n");
 }
 
 void Cpu::SYSCALL() { ExceptionHandler(Exception::Syscall); }

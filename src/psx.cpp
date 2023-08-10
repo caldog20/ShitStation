@@ -7,9 +7,8 @@
 #define OPENGL_SHADER_VERSION "#version 410\n"
 
 PSX::PSX()
-    : bus(cpu, dma, timers, cdrom, sio, gpu), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler), gpu(scheduler),
-      cdrom(scheduler), sio(scheduler) {
-
+    : bus(cpu, dma, timers, cdrom, sio, gpu), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler), gpu(scheduler), cdrom(scheduler),
+      sio(scheduler) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
         Helpers::panic("Error initializing SDL: {}", SDL_GetError());
     }
@@ -31,7 +30,7 @@ PSX::PSX()
     }
 
     SDL_GL_MakeCurrent(window, glContext);
-    SDL_GL_SetSwapInterval(1);  // VSync on by default
+    SDL_GL_SetSwapInterval(0);  // VSync on by default
 
     if (!gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress)) {
         Helpers::panic("Error initializing glad GL Loader: {}", SDL_GetError());
@@ -163,7 +162,6 @@ void PSX::update() {
 
     tempScheduleVBlank();
     vblank = false;
-    gpu.render();  // Dump any remaining verts
     gpu.vblank();
 
     screenVAO.bind();
@@ -212,9 +210,7 @@ void PSX::loadBIOS(const std::filesystem::path& path) {
     biosLoaded = true;
 }
 
-void PSX::loadDisc(const std::filesystem::path& path) {
-    cdrom.loadDisc(path);
-}
+void PSX::loadDisc(const std::filesystem::path& path) { cdrom.loadDisc(path); }
 
 void PSX::sideload(const std::filesystem::path& path) {
     u32 initialPC = 0;

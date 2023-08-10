@@ -5,6 +5,7 @@
 
 #include "BitField.hpp"
 #include "support/helpers.hpp"
+#include "magic_enum.hpp"
 
 namespace Bus {
 class Bus;
@@ -77,6 +78,25 @@ enum Exception : u32 {
     BadLoadAddress = 0x4,
     BadStoreAddress = 0x5,
     IllegalInstruction = 0xA,
+};
+
+enum class KernelEvents : u32 {
+    VBLANK = 0x0000001,
+    GP0 = 0x0000002,
+    CDROM = 0x0000003,
+    DMA = 0x0000004,
+    Timer0 = 0x0000005,
+    Timer12 = 0x0000006,
+    Controller = 0x0000008,
+    SPU = 0x0000009,
+    PIO = 0x000000A,
+    SIO = 0x000000B,
+    Exception = 0x0000010,
+    MemCard = 0x0000011,
+    Dotclock = 0x2000000,
+    HorizontalRetrace = 0x2000001,
+    OneEighthClock = 0x2000002,
+    VerticalRetrace = 0x2000003,
 };
 
 struct Cop0Regs {
@@ -165,6 +185,10 @@ class Cpu {
     const u32 RESET_VECTOR = 0xbfc00000;
     const u32 SHELL_PC = 0x80030000;
     const u32 ExceptionHandlerAddr[2] = {0x80000080, 0xbfc00180};
+
+
+
+
 
     void ExceptionHandler(Exception cause, u32 cop = 0);
     void Branch(bool link = false);

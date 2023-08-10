@@ -34,6 +34,11 @@ static void info(const char* fmt, Args&... args) {
 }
 
 template <typename... Args>
+static void info(const char* fmt, Args&&... args) {
+    fmt::print(fg(fmt::color::white), fmt, std::forward<Args>(args)...);
+}
+
+template <typename... Args>
 static void log(fmt::format_string<Args...> fmt, Args&... args) {
     fmt::print(fmt, std::forward<Args>(args)...);
 }

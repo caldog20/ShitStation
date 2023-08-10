@@ -22,6 +22,8 @@ struct Timer {
     bool irq;
     bool atTarget;
     bool atMax;
+
+    bool paused;
 };
 
 class Timers {

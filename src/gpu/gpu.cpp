@@ -1,4 +1,5 @@
 #include "gpu.hpp"
+
 #include "scheduler/scheduler.hpp"
 
 namespace GPU {
@@ -59,7 +60,7 @@ void GPU::reset() {
 }
 
 u32 GPU::read1() {
-//    return gpustat;
+    //    return gpustat;
     return 0b01011110100000000000000000000000;
 }
 
@@ -167,7 +168,7 @@ void GPU::updateGPUStat() {
 
     gpustat |= 1 << 30;
     // TODO: Fix this later
-//    gpustat |= 1 << 31;
+    //    gpustat |= 1 << 31;
 
     gpustat |= dmaRequest << 25;
 }
