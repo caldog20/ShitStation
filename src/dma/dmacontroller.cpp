@@ -6,8 +6,8 @@
 #include "bus/bus.hpp"
 #include "cdrom/cdrom.hpp"
 #include "gpu/gpu.hpp"
-#include "spu/spu.hpp"
 #include "scheduler/scheduler.hpp"
+#include "spu/spu.hpp"
 #include "support/log.hpp"
 
 namespace DMA {

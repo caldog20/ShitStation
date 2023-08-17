@@ -5,9 +5,9 @@
 #include "dma/dmacontroller.hpp"
 #include "gpu/gpu.hpp"
 #include "sio/sio.hpp"
+#include "spu/spu.hpp"
 #include "support/log.hpp"
 #include "timers/timers.hpp"
-#include "spu/spu.hpp"
 
 namespace Bus {
 

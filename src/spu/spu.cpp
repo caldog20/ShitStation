@@ -1,6 +1,6 @@
-#include <cassert>
-
 #include "spu.hpp"
+
+#include <cassert>
 
 namespace Spu {
 
@@ -22,15 +22,15 @@ u16 Spu::read16(u32 address) {
     auto voice = (address - 0x1F801C00) >> 4;
     if (address >= 0x1F801C00 && address < 0x1F801D80) {
         auto& v = voices[voice];
-        
+
         switch (address & 0xF) {
-            case 0x0: return v.VolumeLeft; 
-            case 0x2: return v.VolumeRight; 
-            case 0x4: return v.ADPCMSampleRate; 
-            case 0x6: return v.ADPCMStartAddress; 
-            case 0x8: return v.AD; 
-            case 0xA: return v.SR; 
-            case 0xC: return v.ASDRVolume; 
+            case 0x0: return v.VolumeLeft;
+            case 0x2: return v.VolumeRight;
+            case 0x4: return v.ADPCMSampleRate;
+            case 0x6: return v.ADPCMStartAddress;
+            case 0x8: return v.AD;
+            case 0xA: return v.SR;
+            case 0xC: return v.ASDRVolume;
             case 0xE: return v.ADPCMRepeatAddress;
             default: Log::warn("[SPU] unhandled read16 Voice Registers {:#x}\n", address); break;
         }
@@ -38,40 +38,40 @@ u16 Spu::read16(u32 address) {
 
     // Control Registers
     switch (address) {
-        case 0x1F801D80: return control.MainVolumeLeft; 
-        case 0x1F801D82: return control.MainVolumeRight; 
-        case 0x1F801D84: return control.ReverbOutputVolumeLeft; 
-        case 0x1F801D86: return control.ReverbOutputVolumeRight; 
-        // KONreturn 
-        case 0x1F801D88: return getVoiceRegister<VoiceRegister::KON, true>(); 
+        case 0x1F801D80: return control.MainVolumeLeft;
+        case 0x1F801D82: return control.MainVolumeRight;
+        case 0x1F801D84: return control.ReverbOutputVolumeLeft;
+        case 0x1F801D86: return control.ReverbOutputVolumeRight;
+        // KONreturn
+        case 0x1F801D88: return getVoiceRegister<VoiceRegister::KON, true>();
         case 0x1F801D8A: return getVoiceRegister<VoiceRegister::KON, false>();
-        // KOFFreturn 
-        case 0x1F801D8C: return getVoiceRegister<VoiceRegister::KOFF, true>(); 
-        case 0x1F801D8E: return getVoiceRegister<VoiceRegister::KOFF, false>(); 
-        // Channel FMreturn 
-        case 0x1F801D90: return getVoiceRegister<VoiceRegister::FM, true>(); 
-        case 0x1F801D92: return getVoiceRegister<VoiceRegister::FM, false>(); 
-        // Channel Noisereturn 
-        case 0x1F801D94: return getVoiceRegister<VoiceRegister::NON, true>(); 
-        case 0x1F801D96: return getVoiceRegister<VoiceRegister::NON, false>(); 
-        // Channel Reverbreturn 
-        case 0x1F801D98: return getVoiceRegister<VoiceRegister::Reverb, true>(); 
-        case 0x1F801D9A: return getVoiceRegister<VoiceRegister::Reverb, false>(); 
-        // Channel Statusreturn 
-        case 0x1F801D9C: return getVoiceRegister<VoiceRegister::Status, true>(); 
-        case 0x1F801D9E: return getVoiceRegister<VoiceRegister::Status, false>(); 
-        case 0x1F801DA2: return control.RWASA; 
-        case 0x1F801DA4: return control.IRQAddress; 
-        case 0x1F801DA6: return control.DataTransferAddress; 
-        case 0x1F801DA8: return control.DataTransferFifo; 
-        case 0x1F801DAA: return control.SPUCNT; 
-        case 0x1F801DAC: return control.DataTransferControl; 
-        case 0x1F801DB0: return control.CDVolumeLeft; 
-        case 0x1F801DB2: return control.CDVolumeRight; 
-        case 0x1F801DB4: return control.ExternVolumeLeft; 
-        case 0x1F801DB6: return control.ExternVolumeRight; 
-        case 0x1F801DB8: return control.CurrentVolumeLeft; 
-        case 0x1F801DBA: return control.CurrentVolumeRight; 
+        // KOFFreturn
+        case 0x1F801D8C: return getVoiceRegister<VoiceRegister::KOFF, true>();
+        case 0x1F801D8E: return getVoiceRegister<VoiceRegister::KOFF, false>();
+        // Channel FMreturn
+        case 0x1F801D90: return getVoiceRegister<VoiceRegister::FM, true>();
+        case 0x1F801D92: return getVoiceRegister<VoiceRegister::FM, false>();
+        // Channel Noisereturn
+        case 0x1F801D94: return getVoiceRegister<VoiceRegister::NON, true>();
+        case 0x1F801D96: return getVoiceRegister<VoiceRegister::NON, false>();
+        // Channel Reverbreturn
+        case 0x1F801D98: return getVoiceRegister<VoiceRegister::Reverb, true>();
+        case 0x1F801D9A: return getVoiceRegister<VoiceRegister::Reverb, false>();
+        // Channel Statusreturn
+        case 0x1F801D9C: return getVoiceRegister<VoiceRegister::Status, true>();
+        case 0x1F801D9E: return getVoiceRegister<VoiceRegister::Status, false>();
+        case 0x1F801DA2: return control.RWASA;
+        case 0x1F801DA4: return control.IRQAddress;
+        case 0x1F801DA6: return control.DataTransferAddress;
+        case 0x1F801DA8: return control.DataTransferFifo;
+        case 0x1F801DAA: return control.SPUCNT;
+        case 0x1F801DAC: return control.DataTransferControl;
+        case 0x1F801DB0: return control.CDVolumeLeft;
+        case 0x1F801DB2: return control.CDVolumeRight;
+        case 0x1F801DB4: return control.ExternVolumeLeft;
+        case 0x1F801DB6: return control.ExternVolumeRight;
+        case 0x1F801DB8: return control.CurrentVolumeLeft;
+        case 0x1F801DBA: return control.CurrentVolumeRight;
         case 0x1F801DAE: return control.SPUSTAT;
         default: Log::warn("[SPU] unhandled read16 {:#x}\n", address); break;
     }
@@ -79,12 +79,10 @@ u16 Spu::read16(u32 address) {
 
 u32 Spu::read32(u32 address) { return 0; }
 
-void Spu::write8(u32 address, u8 value) {
-    Log::debug("[SPU] write8 {:#x} {:#x}\n", address, value);
-}
+void Spu::write8(u32 address, u8 value) { Log::debug("[SPU] write8 {:#x} {:#x}\n", address, value); }
 
 void Spu::write16(u32 address, u16 value) {
-//    Log::debug("[SPU] write16 {:#x} {:#x}\n", address, value);
+    //    Log::debug("[SPU] write16 {:#x} {:#x}\n", address, value);
     // Voice Registers
     auto voice = (address - 0x1F801C00) >> 4;
     if (address >= 0x1F801C00 && address < 0x1F801D80) {
@@ -145,14 +143,9 @@ void Spu::write16(u32 address, u16 value) {
         case 0x1F801DBA: control.CurrentVolumeRight = value; break;
         default: Log::warn("[SPU] unhandled write16 {:#x} {:#x}\n", address, value); break;
     }
-
-
-
 }
 
-void Spu::write32(u32 address, u32 value) {
-    Log::debug("[SPU] write32 {:#x} {:#x}\n", address, value);
-}
+void Spu::write32(u32 address, u32 value) { Log::debug("[SPU] write32 {:#x} {:#x}\n", address, value); }
 
 void Spu::pushFifo(u16 value) {
     assert(currentAddress < 512_KB);
@@ -165,7 +158,7 @@ void Spu::pushFifo(u16 value) {
 
 u16 Spu::readRAM() {
     assert(currentAddress < 512_KB);
-    u16 value =  spuram[currentAddress] | (spuram[currentAddress + 1] << 8);
+    u16 value = spuram[currentAddress] | (spuram[currentAddress + 1] << 8);
     currentAddress += 2;
     return value;
 }

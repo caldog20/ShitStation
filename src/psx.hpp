@@ -13,10 +13,10 @@
 #include "scheduler/scheduler.hpp"
 #include "sio/sio.hpp"
 #include "spu/spu.hpp"
-#include "timers/timers.hpp"
 #include "support/helpers.hpp"
 #include "support/log.hpp"
 #include "support/opengl.hpp"
+#include "timers/timers.hpp"
 
 class PSX {
   public:
@@ -71,5 +71,4 @@ class PSX {
     OpenGL::VertexArray screenVAO;
     OpenGL::VertexBuffer screenVBO;
     GLint uniformTextureLocation = 0;
-
 };

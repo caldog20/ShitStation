@@ -1,7 +1,8 @@
+#include "gpugl.hpp"
+
 #include <algorithm>
 #include <utility>
 
-#include "gpugl.hpp"
 #include "scheduler/scheduler.hpp"
 
 namespace GPU {
@@ -574,7 +575,6 @@ void GPU_GL::drawLine() {
     // Since I didn't know how to draw lines
     using enum Shading;
     using enum Transparency;
-
 
     maybeRender(6);
 

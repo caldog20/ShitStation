@@ -45,10 +45,6 @@ struct Control {
     u16 ExternVolumeRight;
 };
 
-
-
-
-
 class Spu {
   public:
     Spu();
@@ -63,9 +59,7 @@ class Spu {
     void write16(u32 address, u16 value);
     void write32(u32 address, u32 value);
 
-
-    enum class VoiceRegister {KON, KOFF, NON, Reverb, FM, Status};
-
+    enum class VoiceRegister { KON, KOFF, NON, Reverb, FM, Status };
 
     template <VoiceRegister reg, bool first>
     void setVoiceRegister(u16 value);
