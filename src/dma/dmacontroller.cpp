@@ -6,6 +6,7 @@
 #include "bus/bus.hpp"
 #include "cdrom/cdrom.hpp"
 #include "gpu/gpu.hpp"
+#include "spu/spu.hpp"
 #include "scheduler/scheduler.hpp"
 #include "support/log.hpp"
 
@@ -190,12 +191,23 @@ void DMA::dmaBlockCopy(Channel& channel, Port port) {
                     bus.write<u32>(addr, value);
                     break;
                 }
+                case Port::SPU: {
+                    value = bus.spu.readRAM();
+                    value |= bus.spu.readRAM() << 16;
+                    bus.write<u32>(addr, value);
+                    break;
+                }
             }
         } else if (channel.direction == Direction::FromRam) {
             value = bus.read<u32>(addr);
             switch (port) {
                 case Port::GPU: {
                     bus.gpu.write0(value);
+                    break;
+                }
+                case Port::SPU: {
+                    bus.spu.pushFifo(static_cast<u16>(value));
+                    bus.spu.pushFifo(static_cast<u16>(value >> 16));
                     break;
                 }
             }
