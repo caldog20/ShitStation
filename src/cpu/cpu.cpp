@@ -91,13 +91,7 @@ void Cpu::handleKernelCalls() {
             // putchar
             case 0x3D: {
                 const char c = regs.gpr[A0];
-                if (c == '\r') break;
-                if (c == '\n') {
-                    Log::info("{}\n", ttyBuffer);
-                    ttyBuffer.clear();
-                    break;
-                }
-                ttyBuffer += c;
+                Log::info("{}", c);
                 break;
             }
             case 0x08: {
