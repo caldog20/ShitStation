@@ -11,6 +11,7 @@ namespace Timers { class Timers; }
 namespace GPU { class GPU; }
 namespace CDROM {class CDROM;}
 namespace SIO {class SIO;}
+namespace Spu {class Spu;}
 // clang-format on
 
 namespace Bus {
@@ -41,7 +42,7 @@ enum : u32 {
 
 class Bus {
   public:
-    Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers, CDROM::CDROM& cdrom, SIO::SIO& sio, GPU::GPU& gpu);
+    Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers, CDROM::CDROM& cdrom, SIO::SIO& sio, GPU::GPU& gpu, Spu::Spu& spu);
     ~Bus();
 
     void reset();
@@ -115,14 +116,13 @@ class Bus {
     GPU::GPU& gpu;
     CDROM::CDROM& cdrom;
     SIO::SIO& sio;
+    Spu::Spu& spu;
 
     u32 CacheControl;
     u32 MemControl[9];
     u32 MemControl2;
     u16 ISTAT;
     u16 IMASK;
-
-    u8 spu[0x280];
 
     u8* ram = nullptr;
     u8* bios = nullptr;

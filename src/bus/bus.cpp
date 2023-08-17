@@ -7,11 +7,12 @@
 #include "sio/sio.hpp"
 #include "support/log.hpp"
 #include "timers/timers.hpp"
+#include "spu/spu.hpp"
 
 namespace Bus {
 
-Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers, CDROM::CDROM& cdrom, SIO::SIO& sio, GPU::GPU& gpu)
-    : cpu(cpu), dma(dma), timers(timers), gpu(gpu), cdrom(cdrom), sio(sio) {
+Bus::Bus(Cpu::Cpu& cpu, DMA::DMA& dma, Timers::Timers& timers, CDROM::CDROM& cdrom, SIO::SIO& sio, GPU::GPU& gpu, Spu::Spu& spu)
+    : cpu(cpu), dma(dma), timers(timers), gpu(gpu), cdrom(cdrom), sio(sio), spu(spu) {
     try {
         ram = new u8[MemorySize::Ram];
         bios = new u8[MemorySize::Bios];
@@ -64,9 +65,6 @@ void Bus::reset() {
     MemControl2 = 0;
     CacheControl = 0;
     ISTAT = IMASK = 0;
-
-    // temporary
-    std::memset(spu, 0, sizeof(spu));
 }
 
 u32 Bus::fetch(u32 address) {
@@ -120,6 +118,7 @@ u8 Bus::read8(u32 address) {
     if (EXP2.contains(hw_address)) {
         return 0xff;
     }
+
     if (EXP1.contains(hw_address)) {
         return 0xff;
     }
@@ -183,8 +182,7 @@ u16 Bus::read16(u32 address) {
     }
 
     if (SPU.contains(hw_address)) {
-        auto offset = SPU.offset(hw_address);
-        return *(u16*)(spu + offset);
+        return spu.read16(hw_address);
     }
 
     if (TIMERS.contains(hw_address)) {
@@ -197,8 +195,7 @@ u16 Bus::read16(u32 address) {
         auto offset = PAD.offset(hw_address);
         return sio.read<u16>(offset);
     }
-    // PAD
-    // SIO
+
     // EXP1
     Log::warn("[BUS] [READ16] Unhandled read at address: {:08x}\n", address);
     return 0;
@@ -271,8 +268,13 @@ u32 Bus::read32(u32 address) {
         return MemControl[offset >> 2];
     }
 
-    // EXP1
-    // GPU
+    if (SPU.contains(hw_address)) {
+        return spu.read32(hw_address);
+    }
+
+    if (EXP1.contains(hw_address)) {
+        return 0xff;
+    }
 
     Log::warn("[BUS] [READ32] Unhandled read at address: {:08x}\n", address);
     return 0;
@@ -320,7 +322,14 @@ void Bus::write8(u32 address, u8 value) {
         return sio.write<u8>(offset, value);
     }
 
-    // EXP2
+    if (SPU.contains(hw_address)) {
+        return spu.write8(hw_address, value);
+    }
+
+    if (EXP2.contains(hw_address)) {
+        return;
+    }
+
     Log::warn("[BUS] [WRITE8] Unhandled write at address: {:08x} : value: {:08x}\n", address, value);
 }
 
@@ -361,9 +370,7 @@ void Bus::write16(u32 address, u16 value) {
     }
 
     if (SPU.contains(hw_address)) {
-        auto offset = SPU.offset(hw_address);
-        *(u16*)(spu + offset) = value;
-        return;
+        return spu.write16(hw_address, value);
     }
 
     if (TIMERS.contains(hw_address)) {
@@ -456,6 +463,11 @@ void Bus::write32(u32 address, u32 value) {
             gpu.write1(value);
         }
         return;
+    }
+
+    if (SPU.contains(hw_address)) {
+        spu.write16(hw_address, value & 0xFFFF);
+        spu.write16(hw_address, value >> 16);
     }
 
     // SPU
