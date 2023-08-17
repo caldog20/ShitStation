@@ -3,8 +3,37 @@
 
 #include "support/helpers.hpp"
 #include "support/log.hpp"
+#include "BitField.hpp"
 
 namespace Spu {
+
+union SPUCNT {
+    u16 r;
+    BitField<0, 1, u16> CDAudioEnable;
+    BitField<1, 1, u16> ExternalAudioEnable;
+    BitField<2, 1, u16> CDAudioReverb;
+    BitField<3, 1, u16> ExternalAudioReverb;
+    BitField<4, 2, u16> SRAMTransferMode;
+    BitField<6, 1, u16> IRQEnable;
+    BitField<7, 1, u16> ReverbMasterEnable;
+    BitField<8, 2, u16> NoiseFreqStep;
+    BitField<10, 4, u16> NoiseFreqShift;
+    BitField<14, 1, u16> MuteSPU;
+    BitField<15, 1, u16> SPUEnable;
+};
+
+// Read Only
+union SPUSTAT {
+    u16 r;
+    BitField<0, 6, u16> SPUMode;
+    BitField<6, 1, u16> IRQ;
+    BitField<7, 1, u16> DMARWRequest;
+    BitField<8, 1, u16> DMAWriteRequest;
+    BitField<9, 1, u16> DMAReadRequest;
+    BitField<10, 1, u16> DataTransferBusy;
+    BitField<11, 1, u16> CaptureWriteHalf; // 0 = First Half, 1 = Second Half
+    BitField<12, 4, u16> unused;
+};
 
 struct Voice {
     u16 VolumeLeft;
@@ -34,9 +63,9 @@ struct Control {
     u16 IRQAddress;
     u16 DataTransferAddress;
     u16 DataTransferFifo;
-    u16 SPUCNT;
+    SPUCNT SPUCNT;
     u16 DataTransferControl;
-    u16 SPUSTAT;
+    SPUSTAT SPUSTAT;
     u16 CDVolumeLeft;
     u16 CDVolumeRight;
     u16 CurrentVolumeLeft;

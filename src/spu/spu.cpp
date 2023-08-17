@@ -64,7 +64,7 @@ u16 Spu::read16(u32 address) {
         case 0x1F801DA4: return control.IRQAddress;
         case 0x1F801DA6: return control.DataTransferAddress;
         case 0x1F801DA8: return control.DataTransferFifo;
-        case 0x1F801DAA: return control.SPUCNT;
+        case 0x1F801DAA: return control.SPUCNT.r;
         case 0x1F801DAC: return control.DataTransferControl;
         case 0x1F801DB0: return control.CDVolumeLeft;
         case 0x1F801DB2: return control.CDVolumeRight;
@@ -72,7 +72,7 @@ u16 Spu::read16(u32 address) {
         case 0x1F801DB6: return control.ExternVolumeRight;
         case 0x1F801DB8: return control.CurrentVolumeLeft;
         case 0x1F801DBA: return control.CurrentVolumeRight;
-        case 0x1F801DAE: return control.SPUSTAT;
+        case 0x1F801DAE: return control.SPUSTAT.r;
         default: Log::warn("[SPU] unhandled read16 {:#x}\n", address); break;
     }
 }
@@ -133,7 +133,7 @@ void Spu::write16(u32 address, u16 value) {
             currentAddress = value * 8;
             break;
         case 0x1F801DA8: pushFifo(value); break;
-        case 0x1F801DAA: control.SPUCNT = value; break;
+        case 0x1F801DAA: control.SPUCNT.r = value; break;
         case 0x1F801DAC: control.DataTransferControl = value; break;
         case 0x1F801DB0: control.CDVolumeLeft = value; break;
         case 0x1F801DB2: control.CDVolumeRight = value; break;
