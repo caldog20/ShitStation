@@ -1,0 +1,2 @@
+command script import ./BitFieldDebug.py
+type summary add -x -F BitFieldDebug.BitFieldDebug BitField
