@@ -12,10 +12,11 @@
 #include "gpu/softgpu.hpp"
 #include "scheduler/scheduler.hpp"
 #include "sio/sio.hpp"
+#include "spu/spu.hpp"
+#include "timers/timers.hpp"
 #include "support/helpers.hpp"
 #include "support/log.hpp"
 #include "support/opengl.hpp"
-#include "timers/timers.hpp"
 
 class PSX {
   public:
@@ -52,6 +53,7 @@ class PSX {
 
     CDROM::CDROM cdrom;
     SIO::SIO sio;
+    Spu::Spu spu;
 
     SDL_Renderer* renderer;
     SDL_Window* window;
@@ -70,8 +72,4 @@ class PSX {
     OpenGL::VertexBuffer screenVBO;
     GLint uniformTextureLocation = 0;
 
-    struct ScreenVertex {
-        OpenGL::vec2 pos;
-        OpenGL::vec2 uv;
-    };
 };

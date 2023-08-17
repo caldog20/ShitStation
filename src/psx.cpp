@@ -7,7 +7,7 @@
 #define OPENGL_SHADER_VERSION "#version 410 core\n"
 
 PSX::PSX()
-    : bus(cpu, dma, timers, cdrom, sio, gpu), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler), gpu(scheduler), cdrom(scheduler),
+    : bus(cpu, dma, timers, cdrom, sio, gpu, spu), cpu(bus), scheduler(bus, cpu), dma(bus, scheduler), timers(scheduler), gpu(scheduler), cdrom(scheduler),
       sio(scheduler) {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
         Helpers::panic("Error initializing SDL: {}", SDL_GetError());
@@ -99,6 +99,7 @@ void PSX::reset() {
     timers.reset();
     gpu.reset();
     cdrom.reset();
+    spu.reset();
     tempScheduleVBlank();  // schedule first vblank until gpu is implemented
 }
 
