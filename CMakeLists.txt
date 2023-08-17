@@ -17,6 +17,7 @@ option(ENABLE_SANITIZER_UNDEFINED "Enable Undefined Behavior Sanitizer if availa
 option(ENABLE_CACHE "Strictly disable caching" ON)
 option(ENABLE_IPO  "Enable Interprocedural Optimization" ON)
 option(WARNINGS_AS_ERRORS "Enable Warnings as Errors" OFF)
+option(COPY_RESOURCES "Copy BIOS/resources to build folder" OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
@@ -82,7 +83,9 @@ add_executable(${PROJECT_NAME}
         src/cdrom/cdrom_util.hpp
         src/support/fifo.hpp
         src/sio/sio.cpp
-        src/sio/sio.hpp src/gpu/gpugl.cpp src/gpu/gpugl.hpp src/support/opengl.hpp src/gpu/softgpu.cpp src/gpu/softgpu.hpp)
+        src/sio/sio.hpp src/gpu/gpugl.cpp src/gpu/gpugl.hpp src/support/opengl.hpp src/gpu/softgpu.cpp src/gpu/softgpu.hpp
+        src/spu/spu.cpp
+        src/spu/spu.hpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static glad fmt::fmt magic_enum::magic_enum BitField)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -97,3 +100,9 @@ enable_sanitizers(${PROJECT_NAME}
         ${ENABLE_SANITIZER_THREAD}
         ${ENABLE_SANITIZER_MEMORY}
 )
+
+if (COPY_RESOURCES)
+add_custom_command(TARGET ShitStation POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/SCPH1001.BIN $<TARGET_FILE_DIR:ShitStation>/)
+endif()
