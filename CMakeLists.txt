@@ -9,6 +9,12 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
+# Check Git submodules.
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.gitmodules")
+    execute_process (COMMAND git submodule update --init
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+endif()
+
 option(ENABLE_SANITIZER_ADDRESS  "Enable Address Sanitizer if available" OFF)
 option(ENABLE_SANITIZER_LEAK  "Enable Leak Sanitizer if available" OFF)
 option(ENABLE_SANITIZER_THREAD  "Enable Thread Sanitizer if available" OFF)
@@ -18,15 +24,22 @@ option(ENABLE_CACHE "Strictly disable caching" ON)
 option(ENABLE_IPO  "Enable Interprocedural Optimization" ON)
 option(WARNINGS_AS_ERRORS "Enable Warnings as Errors" OFF)
 option(COPY_RESOURCES "Copy BIOS/resources to build folder" OFF)
+option(BUILD_DOCS "Build documentation" OFF)
+
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+include(cmake/Doxygen.cmake)
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/Cache.cmake)
 include(cmake/CompilerWarnings.cmake)
 include(cmake/Sanitizers.cmake)
 include(cmake/StandardProjectSettings.cmake)
 include(cmake/IPO.cmake)
+
+if (BUILD_DOCS)
+    enable_doxygen()
+endif()
 
 if(WIN32)
     add_compile_definitions(NOMINMAX)
@@ -83,7 +96,12 @@ add_executable(${PROJECT_NAME}
         src/cdrom/cdrom_util.hpp
         src/support/fifo.hpp
         src/sio/sio.cpp
-        src/sio/sio.hpp src/gpu/gpugl.cpp src/gpu/gpugl.hpp src/support/opengl.hpp src/gpu/softgpu.cpp src/gpu/softgpu.hpp
+        src/sio/sio.hpp
+        src/gpu/gpugl.cpp
+        src/gpu/gpugl.hpp
+        src/support/opengl.hpp
+        src/gpu/softgpu.cpp
+        src/gpu/softgpu.hpp
         src/spu/spu.cpp
         src/spu/spu.hpp)
 
