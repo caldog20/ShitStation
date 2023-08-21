@@ -1,7 +1,7 @@
 PATH="$PATH:/usr/libexec"
 
 mkdir -p ShitStation.app/Contents/MacOS/Libraries
-mv cmake-build-debug/ShitStation ShitStation.app/Contents/MacOS
+mv build/ShitStation ShitStation.app/Contents/MacOS
 chmod a+x ShitStation.app/Contents/MacOS/ShitStation
 
 PlistBuddy ShitStation.app/Contents/Info.plist -c "add CFBundleDisplayName string ShitStation"
