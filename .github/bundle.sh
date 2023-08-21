@@ -8,6 +8,7 @@ PlistBuddy ${APPROOT}/Contents/Info.plist -c "add CFBundleDisplayName string Shi
 PlistBuddy ${APPROOT}/Contents/Info.plist -c "add CFBundleIconName string AppIcon"
 PlistBuddy ${APPROOT}/Contents/Info.plist -c "add CFBundleIconFile string AppIcon"
 PlistBuddy ${APPROOT}/Contents/Info.plist -c "add NSHighResolutionCapable bool true"
+PlistBuddy ${APPROOT}/Contents/Info.plist -c "add LSMinimumSystemVersion 10.15"
 PlistBuddy ${APPROOT}/Contents/version.plist -c "add ProjectName string ShitStation"
 
 dylibbundler -od -b -x ShitStation.app/Contents/MacOS/ShitStation -d ShitStation.app/Contents/Frameworks/ -p @rpath

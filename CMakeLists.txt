@@ -8,6 +8,7 @@ project(
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
 # Check Git submodules.
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.gitmodules")
