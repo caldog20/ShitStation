@@ -182,8 +182,6 @@ class CDROM {
 
     CDImage m_disc;
 
-    LocationTarget m_location;
-
     enum class State { Idle, Read, Play, Seek, Busy } m_state = State::Idle;
     enum class Response { First, Second } m_currentResponse = Response::First;
 
