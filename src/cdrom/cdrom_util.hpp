@@ -36,14 +36,6 @@ union Sector {
     };
 };
 
-// class ImageReader {
-//     using sectorBuff = std::vector<Sector>;
-//
-//   private:
-//     std::future_status m_status;
-//     std::future<sectorBuff>;
-// };
-
 static int bcdtoint(u8 value) { return value - 6 * (value >> 4); }
 
 struct LocationTarget {
@@ -70,6 +62,72 @@ struct LocationTarget {
     void setS(u8 s) { sec = fromBCD(s); }
 
     void setF(u8 f) { sect = fromBCD(f); }
+
+    void set(u8 m, u8 s, u8 f) {
+        setM(m);
+        setS(s);
+        setF(f);
+    }
+};
+
+// Maybe have this asyncronously load the disc?
+class CDImage {
+  public:
+    CDImage() {}
+    CDImage(const std::filesystem::path& file) {}
+    ~CDImage() {}
+
+    void reset() {
+        msf.set(0, 0, 0);
+        lsn = 0;
+        isSeeked = false;
+        sector.clear();
+    }
+
+    void read() {
+        if (!isSeeked) seek();
+        sector.clear();
+        std::copy(disc.begin() + lsn, disc.begin() + lsn + sectorSize, std::back_inserter(sector));
+        lsn += sectorSize;
+    }
+
+    void setLoc(u8 m, u8 s, u8 f) {
+        msf.set(m, s, f);
+        isSeeked = false;
+    }
+
+    void seek() {
+        lsn = msf.toLSN() * sectorSize;
+        isSeeked = true;
+    }
+
+    std::vector<u8> getSector() { return sector; }
+
+    [[nodiscard]] bool isDiscLoaded() const { return discLoaded; }
+
+    void loadDisc(const std::filesystem::path& file) {
+        clearDisc();
+        disc.resize(std::filesystem::file_size(file));
+        std::ifstream stream(file, std::ios::binary);
+        stream.unsetf(std::ios::skipws);
+        stream.read(reinterpret_cast<char*>(disc.data()), disc.size());
+        stream.close();
+        discLoaded = true;
+    }
+
+    void clearDisc() {
+        disc.clear();
+        discLoaded = false;
+    }
+
+  private:
+    std::vector<u8> disc;
+    std::vector<u8> sector;
+    LocationTarget msf;
+    u32 lsn = 0;
+    bool isSeeked = false;
+    static constexpr u32 sectorSize = 2352;
+    bool discLoaded = false;
 };
 
 }  // namespace CDROM

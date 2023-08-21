@@ -147,10 +147,7 @@ class CDROM {
     }
 
     void loadDisc(const std::filesystem::path& path);
-    void unloadDisc() {
-        m_discLoaded = false;
-        m_discImage.close();
-    }
+    void unloadDisc() { m_disc.clearDisc(); }
 
     void readSector();
     void paramFifoStatus();
@@ -179,18 +176,11 @@ class CDROM {
 
     u64 m_cycles = 0;
     u32 m_cycleDelta = 0;
-    u32 m_lsn = 0;
-    u32 m_setlocLSN = 0;
 
-    u8 readDataByte();
-
-    bool m_discLoaded = false;
     bool m_trayOpen = false;
     bool m_trayChanged = false;
 
-    bool m_updateLoc = false;
-
-    std::ifstream m_discImage;
+    CDImage m_disc;
 
     LocationTarget m_location;
 
@@ -227,8 +217,6 @@ class CDROM {
     std::queue<u8> m_paramFifo;
     std::vector<u8> m_dataFifo;
     std::vector<u8> m_sector;
-    //    std::array<u8, 2352> m_sectorBuffer;
-    //    std::array<u8, 2352> m_sectorBuffer;
     u32 m_dataFifoIndex = 0;
     bool m_delayFirstRead = false;
     void clearParamFifo() {
