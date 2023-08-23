@@ -764,7 +764,7 @@ void GPU_GL::transferToCpu() {
 
     transferRect = {x, y, w, h};
     // Read vram data into buffer so cpu can read it
-    transferReadBuffer.clear();
+    std::fill(transferReadBuffer.begin(), transferReadBuffer.end(), 0);
     glReadPixels(transferRect.x, transferRect.y, transferRect.w, transferRect.h, GL_RGBA, GL_UNSIGNED_SHORT_1_5_5_5_REV, transferReadBuffer.data());
 }
 
