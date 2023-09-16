@@ -193,7 +193,7 @@ void DMA::dmaBlockCopy(Channel& channel, Port port) {
                 }
                 case Port::SPU: {
                     value = bus.spu.readRAM();
-                    value |= bus.spu.readRAM() << 16;
+                    value |= static_cast<u32>(bus.spu.readRAM() << 16);
                     bus.write<u32>(addr, value);
                     break;
                 }

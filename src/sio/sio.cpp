@@ -277,6 +277,7 @@ void Pad::initKeyCodes() {
 
     // Do Other keys
 }
+
 // TODO Replace hardcoded values when more pads are implemented
 void Pad::reset() {
     m_status = Status::Idle;
